@@ -1,6 +1,6 @@
 # Frontend
 
-Uses React + Vite.
+Uses React + Vite + Tailwind (shadcn)
 
 ### Installation:
 
