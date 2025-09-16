@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { ModeToggle } from '@/components/mode-toggle';
+import { useNavigate } from 'react-router-dom';
 
 // Simple logo component for the navbar
 const Logo = (props: React.SVGAttributes<SVGElement>) => {
@@ -91,10 +92,10 @@ export interface Navbar01Props extends React.HTMLAttributes<HTMLElement> {
 
 // Default navigation links
 const defaultNavigationLinks: Navbar01NavLink[] = [
-	{ href: '#', label: 'Home', active: true },
-	{ href: '#features', label: 'Rules' },
-	{ href: '#pricing', label: 'Leaderboard' },
-	{ href: '#about', label: 'Contact' },
+	{ href: '/', label: 'Home', active: true },
+	{ href: '/rules', label: 'Rules' },
+	{ href: '/leaderboard', label: 'Leaderboard' },
+	{ href: '/play', label: 'Contact' },
 ];
 
 export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
@@ -144,6 +145,8 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
 			}
 		}, [ref]);
 
+		const navigate = useNavigate();
+
 		return (
 			<header
 				ref={combinedRef}
@@ -174,7 +177,7 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
 											{navigationLinks.map((link, index) => (
 												<NavigationMenuItem key={index} className="w-full">
 													<button
-														onClick={(e) => e.preventDefault()}
+														onClick={() => navigate(link.href)}
 														className={cn(
 															"flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer no-underline",
 															link.active
@@ -209,7 +212,7 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
 										{navigationLinks.map((link, index) => (
 											<NavigationMenuItem key={index}>
 												<button
-													onClick={(e) => e.preventDefault()}
+													onClick={() => navigate(link.href)}
 													className={cn(
 														"group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer no-underline",
 														link.active
