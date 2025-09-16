@@ -1,15 +1,14 @@
-// frontend/src/components/ProtectedRoute.tsx
-import { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-export default function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+const ProtectedRoute = () => {
+	const { user, loading } = useAuth();
 
-  if (!user) {
-    // If not logged in, redirect to Sign In
-    return <Navigate to="/signin" replace />;
-  }
+	if (loading) {
+		return <div>Loading...</div>;
+	}
 
-  return <>{children}</>;
-}
+	return user ? <Outlet /> : <Navigate to="/signin" />;
+};
+
+export default ProtectedRoute;

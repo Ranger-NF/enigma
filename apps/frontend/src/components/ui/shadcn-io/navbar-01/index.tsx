@@ -6,7 +6,6 @@ import { useEffect, useState, useRef } from 'react';
 import {
 	NavigationMenu,
 	NavigationMenuItem,
-	NavigationMenuLink,
 	NavigationMenuList,
 } from '@/components/ui/navigation-menu';
 import {
@@ -17,6 +16,10 @@ import {
 import { cn } from '@/lib/utils';
 import { ModeToggle } from '@/components/mode-toggle';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { signOut, signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '@/firebase';
 
 // Simple logo component for the navbar
 const Logo = (props: React.SVGAttributes<SVGElement>) => {
@@ -105,8 +108,6 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
 			logo = <Logo />,
 			logoHref = '#',
 			navigationLinks = defaultNavigationLinks,
-			signInText = 'Sign In',
-			signInHref = '#signin',
 			onSignInClick,
 			...props
 		},
@@ -145,7 +146,27 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
 			}
 		}, [ref]);
 
+
+		const { user, loading } = useAuth();
 		const navigate = useNavigate();
+
+		const handleLogout = async () => {
+			try {
+				await signOut(auth);
+				navigate('/');
+			} catch (error) {
+				console.error(error);
+			}
+		};
+
+		const handleGoogleSignIn = async () => {
+			try {
+				await signInWithPopup(auth, googleProvider);
+				navigate('/');
+			} catch (error) {
+				console.error(error);
+			}
+		};
 
 		return (
 			<header
@@ -231,17 +252,25 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
 					</div>
 					{/* Right side */}
 					<div className="flex items-center gap-3">
-						<Button
-							variant="default"
-							size="sm"
-							className="text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-							onClick={(e) => {
-								e.preventDefault();
-								if (onSignInClick) onSignInClick();
-							}}
-						>
-							{signInText}
-						</Button>
+						{
+							user ? (
+								<>
+									<Avatar>
+										<AvatarImage src={user.photoURL} />
+										<AvatarFallback>CN</AvatarFallback>
+									</Avatar>
+
+									<Button onClick={handleLogout} variant="destructive">
+										Sign Out
+									</Button>
+								</>
+							) : (
+								<Button onClick={handleGoogleSignIn} variant="default">
+									Sign In
+								</Button>
+
+							)
+						}
 						<ModeToggle />
 					</div>
 				</div>

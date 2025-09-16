@@ -1,4 +1,3 @@
-// frontend/src/router.tsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import WelcomePage from "./pages/Home";
 import SignInPage from "./pages/SignInPage";
@@ -13,22 +12,14 @@ export default function AppRouter() {
 			<Routes>
 				<Route path="/" element={<WelcomePage />} />
 				<Route path="/signin" element={<SignInPage />} />
-				<Route
-					path="/play"
-					element={
-						<ProtectedRoute>
-							<PlayPage />
-						</ProtectedRoute>
-					}
-				/>
-				<Route
-					path="/leaderboard"
-					element={
-						<ProtectedRoute>
-							<LeaderboardPage />
-						</ProtectedRoute>
-					}
-				/>
+				<Route element={<ProtectedRoute />}>
+					<Route path="/play" element={<PlayPage />} />
+				</Route>
+
+				<Route element={<ProtectedRoute />}>
+					<Route path="/leaderboard" element={<LeaderboardPage />} />
+				</Route>
+
 				<Route path="/rules" element={<Rules />} />
 			</Routes>
 		</BrowserRouter>
