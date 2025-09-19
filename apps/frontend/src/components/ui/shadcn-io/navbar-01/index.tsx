@@ -147,7 +147,7 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
 		}, [ref]);
 
 
-		const { user } = useAuth();
+		const { user, loading } = useAuth();
 		const navigate = useNavigate();
 
 		const handleLogout = async () => {
