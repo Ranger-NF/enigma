@@ -81,6 +81,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      firebase:
+        specifier: ^12.2.1
+        version: 12.2.1
       lucide-react:
         specifier: ^0.544.0
         version: 0.544.0(react@19.1.1)
