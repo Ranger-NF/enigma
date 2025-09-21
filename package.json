@@ -4,6 +4,7 @@
 	},
 	"packageManager": "pnpm@10.0.0",
 	"dependencies": {
-		"framer-motion": "^12.23.16"
+		"framer-motion": "^12.23.16",
+		"react-icons": "^5.5.0"
 	}
 }

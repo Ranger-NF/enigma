@@ -64,7 +64,12 @@ export default function WelcomePage() {
 								Start Today's Challenge
 							</Button>
 							<Button 
-								onClick={() => window.location.href = '/leaderboard'} 
+								onClick={() => {
+									setIsLoading(true);
+									setTimeout(() => {
+										navigate('/leaderboard');
+									}, 800);
+								}} 
 								variant="outline"
 								className="px-8 py-4 text-lg"
 							>
@@ -126,7 +131,7 @@ export default function WelcomePage() {
 				{/* Features Grid */}
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
 					<div className="bg-card border rounded-lg p-6 text-center">
-						<div className="text-4xl mb-4">��</div>
+						<div className="text-4xl mb-4">📅</div>
 						<h3 className="text-xl font-bold text-foreground mb-2">Daily Challenges</h3>
 						<p className="text-muted-foreground">
 							One new question unlocks each day for 10 days. Complete them as fast as possible!
@@ -134,7 +139,7 @@ export default function WelcomePage() {
 					</div>
 					
 					<div className="bg-card border rounded-lg p-6 text-center">
-						<div className="text-4xl mb-4">��</div>
+						<div className="text-4xl mb-4">🏆</div>
 						<h3 className="text-xl font-bold text-foreground mb-2">Live Leaderboard</h3>
 						<p className="text-muted-foreground">
 							Compete with others! The leaderboard resets daily based on completion speed.
@@ -142,7 +147,7 @@ export default function WelcomePage() {
 					</div>
 					
 					<div className="bg-card border rounded-lg p-6 text-center">
-						<div className="text-4xl mb-4">��</div>
+						<div className="text-4xl mb-4">📈</div>
 						<h3 className="text-xl font-bold text-foreground mb-2">Track Progress</h3>
 						<p className="text-muted-foreground">
 							Monitor your daily progress and see how you rank against other participants.

@@ -1,4 +1,4 @@
-import { Navbar01 } from "@/components/ui/shadcn-io/navbar-01";
+import { Navbar01, type Navbar01NavLink } from "@/components/ui/shadcn-io/navbar-01";
 
 export default function SignInPage() {
 
