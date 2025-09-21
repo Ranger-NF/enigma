@@ -1,4 +1,4 @@
-# 🏴‍☠️ Treasure Hunt Web App Setup Guide
+# Enigma Setup Guide
 
 This guide will help you set up your own 10-day treasure hunt web app with Firebase integration, daily progress tracking, and live leaderboards.
 
@@ -248,4 +248,4 @@ Your treasure hunt web app is now set up and ready to use! Users can:
 4. Track their progress
 5. See their rankings
 
-The app automatically handles daily question unlocking, progress tracking, and leaderboard updates. Enjoy your treasure hunt! 🏴‍☠️
+The app automatically handles daily question unlocking, progress tracking, and leaderboard updates. Enjoy ! 🏴‍☠
