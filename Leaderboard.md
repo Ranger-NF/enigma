@@ -9,7 +9,7 @@ This guide will help you set up your own 10-day treasure hunt web app with Fireb
 1. **Create a new Firebase project:**
    - Go to [Firebase Console](https://console.firebase.google.com/)
    - Click "Create a project"
-   - Name it (e.g., "TreasureHunt")
+   - Name it (e.g., "Enigma")
    - Enable Google Analytics (optional)
 
 2. **Enable Authentication:**
@@ -240,7 +240,7 @@ The app is fully responsive and works on:
 
 ## 🎉 You're Ready!
 
-Your treasure hunt web app is now set up and ready to use! Users can:
+Your web app is now set up and ready to use! Users can:
 
 1. Sign in with Google
 2. Answer daily questions
