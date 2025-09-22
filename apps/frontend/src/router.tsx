@@ -9,37 +9,42 @@ import Rules from "./pages/Rules";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function RouteWithLoading({ element }: { element: JSX.Element }) {
-	const { setIsLoading } = useLoading();
-	const location = useLocation();
+  const { setIsLoading } = useLoading();
+  const location = useLocation();
 
-	useEffect(() => {
-		setIsLoading(true);
-		const timer = setTimeout(() => setIsLoading(false), 800);
-		return () => clearTimeout(timer);
-	}, [location.pathname, setIsLoading]);
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, [location.pathname, setIsLoading]);
 
-	return element;
+  return element;
 }
 
 export default function AppRouter() {
-	return (
-		<BrowserRouter>
-			<Routes>
-				<Route path="/" element={<RouteWithLoading element={<WelcomePage />} />} />
-				<Route path="/signin" element={<SignInPage />} />
-				<Route element={<ProtectedRoute />}>
-					<Route path="/play" element={<RouteWithLoading element={<PlayPage />} />} />
-				</Route>
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Public routes (NO loader here) */}
+        <Route path="/" element={<WelcomePage />} />
+        <Route path="/signin" element={<SignInPage />} />
 
-				<Route element={<ProtectedRoute />}>
-					<Route
-						path="/leaderboard"
-						element={<RouteWithLoading element={<LeaderboardPage />} />}
-					/>
-				</Route>
-
-				<Route path="/rules" element={<Rules />} />
-			</Routes>
-		</BrowserRouter>
-	);
+        {/* Protected routes (loader + auth check) */}
+        <Route element={<ProtectedRoute />}>
+          <Route
+            path="/play"
+            element={<RouteWithLoading element={<PlayPage />} />}
+          />
+          <Route
+            path="/leaderboard"
+            element={<RouteWithLoading element={<LeaderboardPage />} />}
+          />
+          <Route
+            path="/rules"
+            element={<RouteWithLoading element={<Rules />} />}
+          />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
 }

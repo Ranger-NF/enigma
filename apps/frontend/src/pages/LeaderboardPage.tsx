@@ -54,6 +54,7 @@ export default function LeaderboardPage() {
 
   const handleDayChange = (day: number) => {
     setSelectedDay(day);
+    setLeaderboard([]); // Clear leaderboard before fetching new data
     fetchLeaderboard(day);
   };
 
