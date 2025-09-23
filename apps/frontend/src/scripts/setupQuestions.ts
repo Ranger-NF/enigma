@@ -1,7 +1,7 @@
 // This script helps set up the 10-day treasure hunt questions in Firestore
 // Run this in the browser console or as a Node.js script
 
-import {  doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export interface QuestionData {
@@ -22,6 +22,7 @@ const sampleQuestions: QuestionData[] = [
     answer: "Paris",
     hint: "The city of lights",
     difficulty: 1,
+    image: "http://localhost:5000/images/paris.avif",
     unlockDate: serverTimestamp()
   },
   {
@@ -30,6 +31,7 @@ const sampleQuestions: QuestionData[] = [
     answer: "42",
     hint: "Add the numbers together",
     difficulty: 1,
+    image: "http://localhost:5000/images/24.jpg",
     unlockDate: serverTimestamp()
   },
   {
@@ -38,6 +40,7 @@ const sampleQuestions: QuestionData[] = [
     answer: "Jupiter",
     hint: "It's a gas giant",
     difficulty: 2,
+    image: "http://localhost:5000/images/planet.jpg",
     unlockDate: serverTimestamp()
   },
   {

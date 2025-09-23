@@ -280,10 +280,10 @@ function PlayPage() {
                   disabled={submitDisabled}
                   className="w-full py-4 text-lg"
                 >
-                  {loading 
-                    ? "Submitting..." 
-                    : isCooldown 
-                    ? "Please wait..." 
+                  {loading
+                    ? "Submitting..."
+                    : isCooldown
+                    ? "Please wait..."
                     : `Submit Answer (${attemptsLeft} left)`
                   }
                 </Button>

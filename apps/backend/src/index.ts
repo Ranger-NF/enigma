@@ -1,10 +1,10 @@
-import express from 'express';
 import cors from 'cors';
-import admin from 'firebase-admin';
 import dotenv from 'dotenv';
+import express from 'express';
+import admin from 'firebase-admin';
 import authRoutes from './routes/authRoutes';
-import questionRoutes from './routes/questionRoutes';
 import leaderboardRoutes from './routes/leaderboardRoutes';
+import questionRoutes from './routes/questionRoutes';
 
 dotenv.config();
 
@@ -42,6 +42,11 @@ const getCurrentDay = (): number => {
   return Math.min(Math.max(diffDays, 1), 10);
 };
 
+// Static hosting
+app.use('/images',express.static("images",{
+  maxAge: "14d"
+}),)
+
 // Make db and getCurrentDay available to routes
 app.locals.db = db;
 app.locals.getCurrentDay = getCurrentDay;
@@ -50,6 +55,8 @@ app.locals.getCurrentDay = getCurrentDay;
 app.use(authRoutes);
 app.use(questionRoutes);
 app.use(leaderboardRoutes);
+
+
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
