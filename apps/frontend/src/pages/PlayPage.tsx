@@ -21,6 +21,7 @@ interface SubmitResponse {
   correct: boolean;
   attemptsLeft: number;
   cooldown?: boolean;
+  cooldownEndTime?: string; // ISO timestamp when cooldown ends
 }
 
 function PlayPage() {
@@ -39,6 +40,7 @@ function PlayPage() {
   const [maxAttempts, setMaxAttempts] = useState(10);
   const [isCooldown, setIsCooldown] = useState(false);
   const [cooldownMsg, setCooldownMsg] = useState("");
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
 
   useEffect(() => {
     const day = getCurrentDay();
@@ -85,6 +87,28 @@ function PlayPage() {
     fetchQuestion();
   }, [user, currentDay]);
 
+  // Cooldown timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (isCooldown && remainingSeconds > 0) {
+      interval = setInterval(() => {
+        setRemainingSeconds((prev) => {
+          if (prev <= 1) {
+            setIsCooldown(false);
+            setCooldownMsg("");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isCooldown, remainingSeconds]);
+
   const submitAnswer = async () => {
     if (!answer.trim()) {
       setResult("Please enter an answer");
@@ -127,15 +151,23 @@ function PlayPage() {
       // Handle cooldown hint from backend
       if (data.cooldown) {
         setIsCooldown(true);
-        setCooldownMsg(data.result || "Please wait before trying again.");
-        // Light client timer to re-enable after stated window (backend guards real timing)
-        setTimeout(() => {
-          setIsCooldown(false);
-          setCooldownMsg("");
-        }, 3000);
+        
+        if (data.cooldownEndTime) {
+          // Calculate remaining time based on server response
+          const endTime = new Date(data.cooldownEndTime).getTime();
+          const now = Date.now();
+          const remaining = Math.max(0, Math.ceil((endTime - now) / 1000));
+          setRemainingSeconds(remaining);
+          setCooldownMsg(`Please wait ${remaining}s before trying again.`);
+        } else {
+          // Fallback to 10 seconds if no end time provided
+          setRemainingSeconds(10);
+          setCooldownMsg("Please wait before trying again.");
+        }
       } else {
         setIsCooldown(false);
         setCooldownMsg("");
+        setRemainingSeconds(0);
       }
 
       // Update attemptsLeft from backend response
@@ -170,6 +202,14 @@ function PlayPage() {
   const outOfAttempts = attemptsLeft <= 0;
   const inputDisabled = isCompleted || loading || outOfAttempts || isCooldown;
   const submitDisabled = inputDisabled || !answer.trim();
+
+  // Format cooldown message with remaining time
+  const formatCooldownMessage = () => {
+    if (remainingSeconds > 0) {
+      return `Please wait ${remainingSeconds}s before trying again.`;
+    }
+    return cooldownMsg;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -219,9 +259,17 @@ function PlayPage() {
               </div>
             )}
 
-            {!isCompleted && isCooldown && cooldownMsg && (
-              <div className="mt-3 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-lg">
-                ⏱️ {cooldownMsg}
+            {!isCompleted && isCooldown && (
+              <div className="mt-3 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-lg flex items-center justify-between">
+                <span>⏱️ {formatCooldownMessage()}</span>
+                {remainingSeconds > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full border-2 border-amber-600 border-t-transparent animate-spin"></div>
+                    <span className="font-mono text-lg font-semibold">
+                      {remainingSeconds}s
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -283,7 +331,7 @@ function PlayPage() {
                   {loading 
                     ? "Submitting..." 
                     : isCooldown 
-                    ? "Please wait..." 
+                    ? `Wait ${remainingSeconds}s...`
                     : `Submit Answer (${attemptsLeft} left)`
                   }
                 </Button>

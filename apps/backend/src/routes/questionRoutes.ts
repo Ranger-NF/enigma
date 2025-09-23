@@ -5,7 +5,7 @@ import authMiddleware from '../../middleware/authMiddleware';
 const router = Router();
 
 const MAX_ATTEMPTS_PER_DAY = 10;
-const COOLDOWN_WINDOW_MS = 30000; // 30 seconds
+const COOLDOWN_WINDOW_MS = 10000; // 10 seconds
 const MAX_STORED_TIMESTAMPS = 5; // Keep last 5 timestamps for cooldown checking
 
 interface QuestionData {
@@ -41,14 +41,23 @@ async function getUserDayData(db: admin.firestore.Firestore, userId: string, day
   return userData?.completed?.[dayKey] || null;
 }
 
-// Helper function to check if user is in cooldown
-function isInCooldown(timestamps: admin.firestore.Timestamp[]): boolean {
-  if (!timestamps || timestamps.length === 0) return false;
+// Helper function to check if user is in cooldown and get remaining time
+function getCooldownInfo(timestamps: admin.firestore.Timestamp[]): { isInCooldown: boolean; endTime: Date | null; remainingMs: number } {
+  if (!timestamps || timestamps.length === 0) {
+    return { isInCooldown: false, endTime: null, remainingMs: 0 };
+  }
   
   const now = Date.now();
   const lastSubmission = timestamps[timestamps.length - 1];
+  const lastSubmissionTime = lastSubmission.toMillis();
+  const cooldownEndTime = new Date(lastSubmissionTime + COOLDOWN_WINDOW_MS);
+  const remainingMs = Math.max(0, cooldownEndTime.getTime() - now);
   
-  return (now - lastSubmission.toMillis()) < COOLDOWN_WINDOW_MS;
+  return {
+    isInCooldown: remainingMs > 0,
+    endTime: remainingMs > 0 ? cooldownEndTime : null,
+    remainingMs
+  };
 }
 
 router.get('/play', authMiddleware, async (req: Request, res: Response) => {
@@ -125,11 +134,15 @@ router.post('/play/submit', authMiddleware, async (req: Request, res: Response) 
 
     // Check cooldown
     const timestamps = dayData?.timestamps || [];
-    if (isInCooldown(timestamps)) {
+    const cooldownInfo = getCooldownInfo(timestamps);
+    
+    if (cooldownInfo.isInCooldown) {
+      const remainingSeconds = Math.ceil(cooldownInfo.remainingMs / 1000);
       return res.json({
-        result: "Please wait before trying again",
+        result: `Please wait ${remainingSeconds}s before trying again`,
         correct: false,
         cooldown: true,
+        cooldownEndTime: cooldownInfo.endTime?.toISOString(),
         attemptsLeft: Math.max(0, MAX_ATTEMPTS_PER_DAY - attemptsUsed)
       });
     }
@@ -190,6 +203,9 @@ router.post('/play/submit', authMiddleware, async (req: Request, res: Response) 
 
       await userRef.update(updateData);
 
+      // Calculate cooldown end time for the response
+      const cooldownEndTime = new Date(now.toMillis() + COOLDOWN_WINDOW_MS);
+
       // Check if this was the last attempt
       if (attemptsLeft === 0) {
         return res.json({
@@ -202,7 +218,9 @@ router.post('/play/submit', authMiddleware, async (req: Request, res: Response) 
       return res.json({
         result: `Incorrect answer. ${attemptsLeft} attempts remaining.`,
         correct: false,
-        attemptsLeft
+        attemptsLeft,
+        cooldown: true,
+        cooldownEndTime: cooldownEndTime.toISOString()
       });
     }
   } catch (error) {
