@@ -1,7 +1,7 @@
 import { Navbar01 } from "@/components/ui/shadcn-io/navbar-01";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getCurrentDay, getTodaysLeaderboard, getDailyLeaderboard } from "../services/firestoreService";
+import { getCurrentDay, getDailyLeaderboard } from "../services/firestoreService";
 import { Button } from "@/components/ui/button";
 
 interface LeaderboardEntry {
@@ -54,6 +54,7 @@ export default function LeaderboardPage() {
 
   const handleDayChange = (day: number) => {
     setSelectedDay(day);
+    setLeaderboard([]); // Clear leaderboard before fetching new data
     fetchLeaderboard(day);
   };
 

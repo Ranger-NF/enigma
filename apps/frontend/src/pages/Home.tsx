@@ -3,8 +3,6 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { getCurrentDay } from '../services/firestoreService';
 import { useState, useEffect } from 'react';
-// Update the path below if LoadingScreen is located elsewhere
-import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useNavigate } from 'react-router-dom';
 
 export default function WelcomePage() {
@@ -12,14 +10,15 @@ export default function WelcomePage() {
 	const { user, userProgress } = useAuth();
 	const [currentDay, setCurrentDay] = useState(1);
 	const [completedDays, setCompletedDays] = useState(0);
-	const [isLoading, setIsLoading] = useState(false);
 
 	useEffect(() => {
 		const day = getCurrentDay();
 		setCurrentDay(day);
-		
+
 		if (userProgress?.completed) {
-			const completed = Object.values(userProgress.completed).filter((day: any) => day.done).length;
+			const completed = Object.values(userProgress.completed).filter(
+				(day: any) => day.done
+			).length;
 			setCompletedDays(completed);
 		}
 	}, [userProgress]);
@@ -31,19 +30,10 @@ export default function WelcomePage() {
 		{ href: '/play', label: 'Play' },
 	];
 
-	const handlePlayClick = () => {
-		setIsLoading(true);
-		// Add a small delay for the transition
-		setTimeout(() => {
-			navigate('/play');
-		}, 800);
-	};
-
 	return (
 		<div className="relative w-full min-h-screen bg-background">
-			<LoadingScreen isLoading={isLoading} />
 			<Navbar01 navigationLinks={navLinks} />
-			
+
 			<div className="container mx-auto px-4 md:px-6 py-12">
 				{/* Hero Section */}
 				<div className="text-center mb-16">
@@ -51,25 +41,20 @@ export default function WelcomePage() {
 						Treasure Hunt
 					</h1>
 					<p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-						Join our 10-day treasure hunt! One question per day, compete for the fastest completion time, 
-						and climb the daily leaderboard.
+						Join our 10-day treasure hunt! One question per day, compete for the
+						fastest completion time, and climb the daily leaderboard.
 					</p>
-					
+
 					{user ? (
 						<div className="flex flex-col sm:flex-row gap-4 justify-center">
-							<Button 
-								onClick={handlePlayClick}
+							<Button
+								onClick={() => navigate('/play')}
 								className="px-8 py-4 text-lg transition-transform duration-200 hover:scale-105 active:scale-95"
 							>
 								Start Today's Challenge
 							</Button>
-							<Button 
-								onClick={() => {
-									setIsLoading(true);
-									setTimeout(() => {
-										navigate('/leaderboard');
-									}, 800);
-								}} 
+							<Button
+								onClick={() => navigate('/leaderboard')}
 								variant="outline"
 								className="px-8 py-4 text-lg"
 							>
@@ -78,14 +63,14 @@ export default function WelcomePage() {
 						</div>
 					) : (
 						<div className="flex flex-col sm:flex-row gap-4 justify-center">
-							<Button 
-								onClick={() => window.location.href = '/signin'} 
+							<Button
+								onClick={() => (window.location.href = '/signin')}
 								className="px-8 py-4 text-lg"
 							>
 								Sign In to Play
 							</Button>
-							<Button 
-								onClick={() => window.location.href = '/rules'} 
+							<Button
+								onClick={() => (window.location.href = '/rules')}
 								variant="outline"
 								className="px-8 py-4 text-lg"
 							>
@@ -98,32 +83,41 @@ export default function WelcomePage() {
 				{/* Progress Section */}
 				{user && (
 					<div className="bg-card border rounded-lg p-8 mb-12">
-						<h2 className="text-2xl font-bold text-foreground mb-6 text-center">Your Progress</h2>
-						
+						<h2 className="text-2xl font-bold text-foreground mb-6 text-center">
+							Your Progress
+						</h2>
+
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
 							<div className="text-center">
-								<div className="text-3xl font-bold text-primary">{completedDays}</div>
+								<div className="text-3xl font-bold text-primary">
+									{completedDays}
+								</div>
 								<div className="text-muted-foreground">Days Completed</div>
 							</div>
 							<div className="text-center">
-								<div className="text-3xl font-bold text-primary">Day {currentDay}</div>
+								<div className="text-3xl font-bold text-primary">
+									Day {currentDay}
+								</div>
 								<div className="text-muted-foreground">Current Day</div>
 							</div>
 							<div className="text-center">
-								<div className="text-3xl font-bold text-primary">{10 - completedDays}</div>
+								<div className="text-3xl font-bold text-primary">
+									{10 - completedDays}
+								</div>
 								<div className="text-muted-foreground">Days Remaining</div>
 							</div>
 						</div>
 
 						{/* Progress Bar */}
 						<div className="w-full bg-muted rounded-full h-3 mb-4">
-							<div 
+							<div
 								className="bg-primary h-3 rounded-full transition-all duration-500"
 								style={{ width: `${(completedDays / 10) * 100}%` }}
 							></div>
 						</div>
 						<p className="text-center text-muted-foreground">
-							{completedDays}/10 challenges completed ({Math.round((completedDays / 10) * 100)}%)
+							{completedDays}/10 challenges completed (
+							{Math.round((completedDays / 10) * 100)}%)
 						</p>
 					</div>
 				)}
@@ -132,56 +126,85 @@ export default function WelcomePage() {
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
 					<div className="bg-card border rounded-lg p-6 text-center">
 						<div className="text-4xl mb-4">📅</div>
-						<h3 className="text-xl font-bold text-foreground mb-2">Daily Challenges</h3>
+						<h3 className="text-xl font-bold text-foreground mb-2">
+							Daily Challenges
+						</h3>
 						<p className="text-muted-foreground">
-							One new question unlocks each day for 10 days. Complete them as fast as possible!
+							One new question unlocks each day for 10 days. Complete them as
+							fast as possible!
 						</p>
 					</div>
-					
+
 					<div className="bg-card border rounded-lg p-6 text-center">
 						<div className="text-4xl mb-4">🏆</div>
-						<h3 className="text-xl font-bold text-foreground mb-2">Live Leaderboard</h3>
+						<h3 className="text-xl font-bold text-foreground mb-2">
+							Live Leaderboard
+						</h3>
 						<p className="text-muted-foreground">
-							Compete with others! The leaderboard resets daily based on completion speed.
+							Compete with others! The leaderboard resets daily based on
+							completion speed.
 						</p>
 					</div>
-					
+
 					<div className="bg-card border rounded-lg p-6 text-center">
 						<div className="text-4xl mb-4">📈</div>
-						<h3 className="text-xl font-bold text-foreground mb-2">Track Progress</h3>
+						<h3 className="text-xl font-bold text-foreground mb-2">
+							Track Progress
+						</h3>
 						<p className="text-muted-foreground">
-							Monitor your daily progress and see how you rank against other participants.
+							Monitor your daily progress and see how you rank against other
+							participants.
 						</p>
 					</div>
 				</div>
 
 				{/* How It Works */}
 				<div className="bg-card border rounded-lg p-8">
-					<h2 className="text-2xl font-bold text-foreground mb-6 text-center">How It Works</h2>
-					
+					<h2 className="text-2xl font-bold text-foreground mb-6 text-center">
+						How It Works
+					</h2>
+
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 						<div className="text-center">
-							<div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">1</div>
+							<div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">
+								1
+							</div>
 							<h3 className="font-semibold text-foreground mb-2">Sign In</h3>
-							<p className="text-sm text-muted-foreground">Create an account or sign in with Google</p>
+							<p className="text-sm text-muted-foreground">
+								Create an account or sign in with Google
+							</p>
 						</div>
-						
+
 						<div className="text-center">
-							<div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">2</div>
-							<h3 className="font-semibold text-foreground mb-2">Daily Question</h3>
-							<p className="text-sm text-muted-foreground">Answer today's challenge as quickly as possible</p>
+							<div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">
+								2
+							</div>
+							<h3 className="font-semibold text-foreground mb-2">
+								Daily Question
+							</h3>
+							<p className="text-sm text-muted-foreground">
+								Answer today's challenge as quickly as possible
+							</p>
 						</div>
-						
+
 						<div className="text-center">
-							<div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">3</div>
+							<div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">
+								3
+							</div>
 							<h3 className="font-semibold text-foreground mb-2">Compete</h3>
-							<p className="text-sm text-muted-foreground">See your ranking on the daily leaderboard</p>
+							<p className="text-sm text-muted-foreground">
+								See your ranking on the daily leaderboard
+							</p>
 						</div>
-						
+
 						<div className="text-center">
-							<div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">4</div>
+							<div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">
+								4
+							</div>
 							<h3 className="font-semibold text-foreground mb-2">Repeat</h3>
-							<p className="text-sm text-muted-foreground">Come back tomorrow for the next challenge!</p>
+							<p className="text-sm text-muted-foreground">
+								Come back tomorrow for the next challenge!
+							</p>
 						</div>
 					</div>
 				</div>
