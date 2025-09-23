@@ -1,7 +1,7 @@
 // This script helps set up the 10-day treasure hunt questions in Firestore
 // Run this in the browser console or as a Node.js script
 
-import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import {  doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export interface QuestionData {
@@ -11,7 +11,7 @@ export interface QuestionData {
   hint: string;
   difficulty: number;
   image?: string;
-  unlockDate: any;
+  unlockDate: Date | any;
 }
 
 // Sample questions for the 10-day treasure hunt
@@ -101,13 +101,13 @@ const sampleQuestions: QuestionData[] = [
 export const setupQuestions = async () => {
   try {
     console.log('Setting up treasure hunt questions...');
-    
+
     for (const question of sampleQuestions) {
       const questionRef = doc(db, 'questions', `day${question.day}`);
       await setDoc(questionRef, question);
       console.log(`✅ Added Day ${question.day}: ${question.text}`);
     }
-    
+
     console.log('🎉 All questions have been set up successfully!');
     return true;
   } catch (error) {
