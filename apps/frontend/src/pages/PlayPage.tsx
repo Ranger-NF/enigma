@@ -15,12 +15,13 @@ function PlayPage() {
   const [loading, setLoading] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [difficulty, setDifficulty] = useState(1);
+  const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
+  const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
 
   useEffect(() => {
     const day = getCurrentDay();
     setCurrentDay(day);
     
-    // Check if user has already completed today's question
     const checkCompletion = async () => {
       if (user) {
         const completed = await isDayCompleted(user.uid, day);
@@ -32,7 +33,17 @@ function PlayPage() {
   }, [user]);
 
   useEffect(() => {
-    // Fetch today's question
+    if (cooldownSeconds <= 0) return;
+    const interval = setInterval(() => {
+      setCooldownSeconds((prev) => {
+        const next = Math.max(0, prev - 1);
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [cooldownSeconds]);
+
+  useEffect(() => {
     const fetchQuestion = async () => {
       if (!user) return;
       
@@ -51,6 +62,9 @@ function PlayPage() {
         setQuestion(data.question);
         setHint(data.hint);
         setDifficulty(data.difficulty || 1);
+        if (typeof data.isCompleted === 'boolean') setIsCompleted(data.isCompleted);
+        if (typeof data.attemptsLeft === 'number') setAttemptsLeft(data.attemptsLeft);
+        if (typeof data.cooldownSeconds === 'number') setCooldownSeconds(data.cooldownSeconds || 0);
       } catch (error) {
         console.error("Error fetching question:", error);
         setResult("Error loading question");
@@ -65,6 +79,16 @@ function PlayPage() {
       setResult("Please enter an answer");
       return;
     }
+
+    if (cooldownSeconds > 0) {
+      setResult(`Please wait ${cooldownSeconds}s before trying again.`);
+      return;
+    }
+
+    if (attemptsLeft !== null && attemptsLeft <= 0) {
+      setResult("Attempt limit reached for today");
+      return;
+    }
     
     setLoading(true);
     try {
@@ -77,12 +101,22 @@ function PlayPage() {
         },
         body: JSON.stringify({ day: currentDay, answer }),
       });
+      const status = response.status;
       const data = await response.json();
       setResult(data.result);
+
+      if (status === 429) {
+        if (typeof data.cooldownSeconds === 'number') setCooldownSeconds(data.cooldownSeconds || 0);
+        if (typeof data.attemptsLeft === 'number') setAttemptsLeft(data.attemptsLeft);
+        return;
+      }
       
       if (data.correct) {
         setIsCompleted(true);
         await refreshUserProgress();
+      } else {
+        if (typeof data.attemptsLeft === 'number') setAttemptsLeft(data.attemptsLeft);
+        if (typeof data.cooldownSeconds === 'number') setCooldownSeconds(data.cooldownSeconds || 0);
       }
     } catch (error) {
       console.error("Error submitting answer:", error);
@@ -105,7 +139,6 @@ function PlayPage() {
       
       <div className="container mx-auto px-4 md:px-6 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
-          {/* Day Progress Header */}
           <div className="bg-card border rounded-lg p-6">
             <div className="flex justify-between items-center mb-4">
               <h1 className="text-2xl font-bold text-foreground">Day {currentDay} of 10</h1>
@@ -124,15 +157,32 @@ function PlayPage() {
                 ))}
               </div>
             </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {typeof attemptsLeft === 'number' && (
+                <span className="px-3 py-1 rounded-full text-sm border bg-muted/30">
+                  Attempts left: <strong>{attemptsLeft}</strong>
+                </span>
+              )}
+              {cooldownSeconds > 0 && (
+                <span className="px-3 py-1 rounded-full text-sm border bg-yellow-50 text-yellow-800">
+                  ⏳ Cooldown: {cooldownSeconds}s
+                </span>
+              )}
+              {isCompleted && (
+                <span className="px-3 py-1 rounded-full text-sm border bg-green-50 text-green-800">
+                  ✅ Completed
+                </span>
+              )}
+            </div>
             
             {isCompleted && (
-              <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded-lg mb-4">
+              <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded-lg mt-4">
                 ✅ You've completed today's challenge! Check the leaderboard to see your ranking.
               </div>
             )}
           </div>
 
-          {/* Question Card */}
           <div className="bg-card border rounded-lg p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-foreground">Today's Challenge</h2>
@@ -145,7 +195,6 @@ function PlayPage() {
             <p className="text-sm text-muted-foreground">💡 Hint: {hint}</p>
           </div>
           
-          {/* Answer Section */}
           {!isCompleted ? (
             <div className="space-y-4">
               <Input
@@ -153,14 +202,15 @@ function PlayPage() {
                 onChange={(e) => setAnswer(e.target.value)}
                 placeholder="Enter your answer here..."
                 className="text-lg"
-                onKeyPress={(e) => e.key === 'Enter' && submitAnswer()}
+                onKeyPress={(e) => e.key === 'Enter' && !loading && cooldownSeconds === 0 && (attemptsLeft ?? 1) > 0 && submitAnswer()}
+                disabled={cooldownSeconds > 0 || (attemptsLeft !== null && attemptsLeft <= 0)}
               />
               <Button 
                 onClick={submitAnswer}
-                disabled={loading || !answer.trim()}
+                disabled={loading || !answer.trim() || cooldownSeconds > 0 || (attemptsLeft !== null && attemptsLeft <= 0)}
                 className="w-full py-4 text-lg"
               >
-                {loading ? "Submitting..." : "Submit Answer"}
+                {loading ? "Submitting..." : cooldownSeconds > 0 ? `Wait ${cooldownSeconds}s` : (attemptsLeft !== null && attemptsLeft <= 0) ? "No attempts left" : "Submit Answer"}
               </Button>
             </div>
           ) : (
@@ -171,7 +221,6 @@ function PlayPage() {
             </div>
           )}
           
-          {/* Result Message */}
           {result && (
             <div className={`p-4 rounded-lg border ${
               result.includes('Correct') || result.includes('Success') 
