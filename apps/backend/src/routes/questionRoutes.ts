@@ -1,12 +1,8 @@
-import { Router, Request, Response } from 'express';
-import admin from 'firebase-admin';
-import authMiddleware from '../../middleware/authMiddleware';
+import { Router, Request, Response } from "express";
+import admin from "firebase-admin";
+import authMiddleware from "../../middleware/authMiddleware";
 
 const router = Router();
-
-const MAX_ATTEMPTS_PER_DAY = 10;
-const COOLDOWN_WINDOW_MS = 30000; // 30 seconds
-const MAX_STORED_TIMESTAMPS = 5; // Keep last 5 timestamps for cooldown checking
 
 interface QuestionData {
   id: string;
@@ -19,61 +15,64 @@ interface QuestionData {
   unlockDate: admin.firestore.Timestamp;
 }
 
-interface CompletedDay {
-  done: boolean;
-  timestamp: admin.firestore.Timestamp;
-  attempts: number;
-  timestamps: admin.firestore.Timestamp[];
-}
+// Helper to safely read nested fields
+const getNested = (obj: any, path: string, fallback: any) => {
+  return (
+    path
+      .split(".")
+      .reduce(
+        (acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined),
+        obj,
+      ) ?? fallback
+  );
+};
 
-// Helper function to get user's completion data for a specific day
-async function getUserDayData(db: admin.firestore.Firestore, userId: string, day: number): Promise<CompletedDay | null> {
-  const userRef = db.collection('users').doc(userId);
-  const userDoc = await userRef.get();
-  
-  if (!userDoc.exists) {
-    return null;
-  }
-  
-  const userData = userDoc.data();
-  const dayKey = `day${day}`;
-  
-  return userData?.completed?.[dayKey] || null;
-}
+const MAX_ATTEMPTS_PER_DAY = 10;
+const WRONG_COOLDOWN_SECONDS = 30;
 
-// Helper function to check if user is in cooldown
-function isInCooldown(timestamps: admin.firestore.Timestamp[]): boolean {
-  if (!timestamps || timestamps.length === 0) return false;
-  
-  const now = Date.now();
-  const lastSubmission = timestamps[timestamps.length - 1];
-  
-  return (now - lastSubmission.toMillis()) < COOLDOWN_WINDOW_MS;
-}
-
-router.get('/play', authMiddleware, async (req: Request, res: Response) => {
+router.get("/play", authMiddleware, async (req: Request, res: Response) => {
   const { db, getCurrentDay } = req.app.locals;
-  
+
   try {
     const currentDay = getCurrentDay();
-    const questionRef = db.collection('questions').doc(`day${currentDay}`);
+    const questionRef = db.collection("questions").doc(`day${currentDay}`);
     const questionDoc = await questionRef.get();
 
     if (!questionDoc.exists) {
       return res.status(404).json({
         error: `No question found for day ${currentDay}`,
-        currentDay
+        currentDay,
       });
     }
 
     const questionData = questionDoc.data() as QuestionData;
 
-    // Get user's attempts data
-    const userId = (req as any).user.uid;
-    const dayData = await getUserDayData(db, userId, currentDay);
-    
-    const attemptsUsed = dayData?.attempts || 0;
-    const attemptsLeft = Math.max(0, MAX_ATTEMPTS_PER_DAY - attemptsUsed);
+    // Fetch user's attempt/completion status
+    const uid = (req as any).user.uid as string;
+    const userRef = db.collection("users").doc(uid);
+    const userDoc = await userRef.get();
+    const userData = userDoc.exists ? userDoc.data() || {} : {};
+
+    const completedForDay = !!getNested(
+      userData,
+      `completed.day${currentDay}.done`,
+      false,
+    );
+    const attemptCount = Number(
+      getNested(userData, `attempts.day${currentDay}.count`, 0),
+    );
+    const cooldownUntilTs = getNested(
+      userData,
+      `attempts.day${currentDay}.cooldownUntil`,
+      null,
+    );
+
+    let cooldownSeconds = 0;
+    if (cooldownUntilTs && cooldownUntilTs.toDate) {
+      const now = new Date();
+      const diffMs = cooldownUntilTs.toDate().getTime() - now.getTime();
+      cooldownSeconds = Math.max(0, Math.ceil(diffMs / 1000));
+    }
 
     res.json({
       id: questionDoc.id,
@@ -82,133 +81,168 @@ router.get('/play', authMiddleware, async (req: Request, res: Response) => {
       hint: questionData.hint,
       difficulty: questionData.difficulty,
       image: questionData.image,
-      attemptsLeft,
-      maxAttempts: MAX_ATTEMPTS_PER_DAY
+      // User status
+      isCompleted: completedForDay,
+      attemptsLeft: Math.max(0, MAX_ATTEMPTS_PER_DAY - attemptCount),
+      cooldownSeconds,
     });
   } catch (error) {
-    console.error('Error fetching question:', error);
-    res.status(500).json({ error: 'Failed to fetch question' });
+    console.error("Error fetching question:", error);
+    res.status(500).json({ error: "Failed to fetch question" });
   }
 });
 
-router.post('/play/submit', authMiddleware, async (req: Request, res: Response) => {
-  const { db } = req.app.locals;
-  const { day, answer } = req.body;
-  const userId = (req as any).user.uid;
+router.post(
+  "/play/submit",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const { db } = req.app.locals;
+    const { day, answer } = req.body;
+    const userId = (req as any).user.uid;
 
-  if (!day || !answer) {
-    return res.status(400).json({ result: "Missing day or answer" });
-  }
-
-  try {
-    // Get current user data
-    const dayData = await getUserDayData(db, userId, day);
-    
-    // Check if already completed
-    if (dayData?.done) {
-      return res.json({
-        result: "Already completed today's challenge",
-        correct: false,
-        attemptsLeft: Math.max(0, MAX_ATTEMPTS_PER_DAY - (dayData.attempts || 0))
-      });
+    if (!day || !answer) {
+      return res.status(400).json({ result: "Missing day or answer" });
     }
 
-    // Check attempts limit
-    const attemptsUsed = dayData?.attempts || 0;
-    if (attemptsUsed >= MAX_ATTEMPTS_PER_DAY) {
-      return res.json({
-        result: "No attempts left for today",
-        correct: false,
-        attemptsLeft: 0
-      });
-    }
+    try {
+      const uid = (req as any).user.uid as string;
 
-    // Check cooldown
-    const timestamps = dayData?.timestamps || [];
-    if (isInCooldown(timestamps)) {
-      return res.json({
-        result: "Please wait before trying again",
-        correct: false,
-        cooldown: true,
-        attemptsLeft: Math.max(0, MAX_ATTEMPTS_PER_DAY - attemptsUsed)
-      });
-    }
+      const questionRef = db.collection("questions").doc(`day${day}`);
+      const questionDoc = await questionRef.get();
 
-    // Get question data
-    const questionRef = db.collection('questions').doc(`day${day}`);
-    const questionDoc = await questionRef.get();
-
-    if (!questionDoc.exists) {
-      return res.status(400).json({ result: "Question not found for this day" });
-    }
-
-    const questionData = questionDoc.data() as QuestionData;
-
-    if (!questionData?.answer) {
-      return res.status(500).json({ result: "Question data is corrupted" });
-    }
-
-    // Update timestamps and attempts
-    const now = admin.firestore.Timestamp.now();
-    const updatedTimestamps = [...timestamps, now].slice(-MAX_STORED_TIMESTAMPS);
-    const newAttemptsUsed = attemptsUsed + 1;
-    const attemptsLeft = Math.max(0, MAX_ATTEMPTS_PER_DAY - newAttemptsUsed);
-
-    // Check if answer is correct
-    const isCorrect = answer.trim().toLowerCase() === questionData.answer.trim().toLowerCase();
-
-    const userRef = db.collection('users').doc(userId);
-    const dayKey = `day${day}`;
-
-    if (isCorrect) {
-      // Mark as completed
-      await userRef.update({
-        [`completed.${dayKey}`]: {
-          done: true,
-          timestamp: now,
-          attempts: newAttemptsUsed,
-          timestamps: updatedTimestamps
-        }
-      });
-
-      return res.json({
-        result: "Success 🎉 Correct Answer!",
-        correct: true,
-        attemptsLeft
-      });
-    } else {
-      // Update attempts and timestamps without marking as done
-      const updateData: any = {
-        [`completed.${dayKey}.attempts`]: newAttemptsUsed,
-        [`completed.${dayKey}.timestamps`]: updatedTimestamps
-      };
-
-      // If this is the first attempt, also set done: false
-      if (!dayData) {
-        updateData[`completed.${dayKey}.done`] = false;
+      if (!questionDoc.exists) {
+        return res
+          .status(400)
+          .json({ result: "Question not found for this day" });
       }
 
-      await userRef.update(updateData);
+      const questionData = questionDoc.data() as QuestionData;
 
-      // Check if this was the last attempt
-      if (attemptsLeft === 0) {
-        return res.json({
-          result: "Incorrect answer. No more attempts left for today.",
-          correct: false,
-          attemptsLeft: 0
+      if (!questionData?.answer) {
+        return res.status(500).json({ result: "Question data is corrupted" });
+      }
+
+      const userRef = db.collection("users").doc(uid);
+      const userDoc = await userRef.get();
+      const userData = userDoc.exists ? userDoc.data() || {} : {};
+
+      // Prevent submissions if already completed
+      const alreadyCompleted = !!getNested(
+        userData,
+        `completed.day${day}.done`,
+        false,
+      );
+      if (alreadyCompleted) {
+        return res.status(200).json({
+          result: "Already completed for today",
+          correct: true,
+          attemptsLeft: Math.max(
+            0,
+            MAX_ATTEMPTS_PER_DAY -
+              Number(getNested(userData, `attempts.day${day}.count`, 0)),
+          ),
+          cooldownSeconds: 0,
         });
       }
 
-      return res.json({
-        result: `Incorrect answer. ${attemptsLeft} attempts remaining.`,
-        correct: false,
-        attemptsLeft
-      });
+      // Enforce cooldown
+      const cooldownUntil = getNested(
+        userData,
+        `attempts.day${day}.cooldownUntil`,
+        null,
+      );
+      if (cooldownUntil && cooldownUntil.toDate) {
+        const now = new Date();
+        const remainingMs = cooldownUntil.toDate().getTime() - now.getTime();
+        const remainingSec = Math.ceil(remainingMs / 1000);
+        if (remainingSec > 0) {
+          return res.status(429).json({
+            result: `Please wait ${remainingSec}s before your next attempt`,
+            correct: false,
+            attemptsLeft: Math.max(
+              0,
+              MAX_ATTEMPTS_PER_DAY -
+                Number(getNested(userData, `attempts.day${day}.count`, 0)),
+            ),
+            cooldownSeconds: remainingSec,
+          });
+        }
+      }
+
+      // Enforce attempt limit
+      const attemptCount = Number(
+        getNested(userData, `attempts.day${day}.count`, 0),
+      );
+      if (attemptCount >= MAX_ATTEMPTS_PER_DAY) {
+        return res.status(429).json({
+          result: "Attempt limit reached for today",
+          correct: false,
+          attemptsLeft: 0,
+          cooldownSeconds: 0,
+        });
+      }
+
+      // Validate answer
+      const isCorrect =
+        String(answer).trim().toLowerCase() ===
+        String(questionData.answer).trim().toLowerCase();
+
+      if (isCorrect) {
+        // Mark completion and (optionally) record completion timestamp
+        await userRef.set(
+          {
+            completed: {
+              [`day${day}`]: {
+                done: true,
+                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+              },
+            },
+          },
+          { merge: true },
+        );
+
+        return res.json({
+          result: "Success 🎉 Correct Answer!",
+          correct: true,
+          attemptsLeft: Math.max(0, MAX_ATTEMPTS_PER_DAY - attemptCount),
+          cooldownSeconds: 0,
+        });
+      } else {
+        // Wrong answer: increment attempts and set cooldown 30s from now
+        const now = admin.firestore.Timestamp.now();
+        const cooldownUntilTs = admin.firestore.Timestamp.fromMillis(
+          now.toMillis() + WRONG_COOLDOWN_SECONDS * 1000,
+        );
+
+        await userRef.set(
+          {
+            attempts: {
+              [`day${day}`]: {
+                count: attemptCount + 1,
+                cooldownUntil: cooldownUntilTs,
+              },
+            },
+          },
+          { merge: true },
+        );
+
+        const attemptsLeft = Math.max(
+          0,
+          MAX_ATTEMPTS_PER_DAY - (attemptCount + 1),
+        );
+
+        return res.status(200).json({
+          result: "Incorrect answer. Try again after cooldown.",
+          correct: false,
+          attemptsLeft,
+          cooldownSeconds: WRONG_COOLDOWN_SECONDS,
+        });
+      }
+    } catch (error) {
+      console.error("Error validating answer:", error);
+      res.status(500).json({ result: "Error validating answer" });
     }
-  } catch (error) {
-    console.error('Error validating answer:', error);
-    res.status(500).json({ result: "Error validating answer" });
-  }
-});
+  },
+);
 
 export default router;
