@@ -40,14 +40,14 @@ export default function WelcomePage() {
 
 			<div className="container mx-auto py-12">
 				{/* Hero Section */}
-				<section className='relative h-screen'>
+				<section className=' relative md:h-screen'>
 					<img
 						src={backgroundPng}
 						alt="Background"
-						className="absolute bottom-[20%] left-[25%] h-[600px] w-[600px] z-[-0.2] opacity-60"
+						className="absolute md:bottom-[20%] md:left-[25%] md:h-[600px] z-[-0.2] opacity-60"
 						
 					/>
-					<div className="relative top-[19%] z-10 text-center mb-16">
+					<div className="relative md:px-0 px-[20px] top-[19%] z-10 text-center mb-16">
 						<h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
 							ENIGMA
 						</h1>
@@ -76,7 +76,7 @@ export default function WelcomePage() {
 							<div className="flex flex-col sm:flex-row gap-4 justify-center">
 								<Button
 									onClick={() => (window.location.href = '/signin')}
-									className="px-8 py-4 text-lg"
+									className="text-lg"
 								>
 									Sign In to Play
 								</Button>
@@ -91,7 +91,7 @@ export default function WelcomePage() {
 						)}
 					</div>
 				</section>
-				<section>
+				<section className='px-[15px] md:px-0'>
 					<img
 						src={potactorImage}
 						alt="Background"
@@ -226,7 +226,7 @@ export default function WelcomePage() {
 						</div>
 					</div>
 				</section>
-				<section id="rules" className='h-screen'>
+				<section id="rules" className='px-[15px] md:px-0 h-screen'>
 					<Rules/>
 				</section>
 				

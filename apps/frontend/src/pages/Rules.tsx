@@ -28,11 +28,11 @@ export default function Rules() {
 				src={glassImage2}
 			/>
 			<div className='flex h-full w-full items-center justify-center'>
-				<div className='flex flex-col gap-[20px] items-center bg-card border z-10 rounded-lg p-[50px]'>
-					<div className='text-[30px] font-bold pt-[10px]'>Rules and Regulations</div>
+				<div className='flex flex-col gap-[20px] items-center bg-card border z-10 rounded-lg p-[15px] md:p-[50px]'>
+					<div className='md:text-[30px] text-[20px] font-bold pt-[10px]'>Rules and Regulations</div>
 					<ul className="list-disc list-inside space-y-2">
 						{rulesAndRegulations.map((rule, index) => (
-						<li key={index} className="text-white">
+						<li key={index}>
 							{rule}
 						</li>
 						))}
