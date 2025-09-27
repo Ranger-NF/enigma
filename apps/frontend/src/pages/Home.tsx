@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import backgroundPng from '../assets/background.png';
 import potactorImage from '../assets/bg-section-2.png';
 import Footer from '@/components/ui/footer';
+import Rules from './Rules';
 
 export default function WelcomePage() {
 	const navigate = useNavigate();
@@ -225,6 +226,10 @@ export default function WelcomePage() {
 						</div>
 					</div>
 				</section>
+				<section id="rules" className='h-screen'>
+					<Rules/>
+				</section>
+				
 			</div>
 			<Footer/>
 		</div>

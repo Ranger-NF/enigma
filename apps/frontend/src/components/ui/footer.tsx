@@ -23,28 +23,28 @@ const Footer: React.FC = () => {
                         <span className="hidden font-bold text-[34px] sm:inline-block">Enigma</span>
                     </div>
                     <div>
-                        <div className='font-bold text-[18px]'>Feel free to contact us:</div>
+                        <div className='font-bold text-[18px] pb-[10px]'>Feel free to contact us:</div>
                     </div>
                     <div className='flex gap-[50px]'>
                         <div className='flex'>
-                            <div className='pr-[5px]'>Aravind : </div>
-                            <a href={`tel:+918606645976`}>
+                            <div className='pr-[5px] font-bold'>Aravind : </div>
+                            <a href={`tel:+918606645976`} className='font-bold'>
                                 +91 86606645976
                             </a>
                         </div>
                         <div className='flex'>
-                            <div className='pr-[5px]'>
+                            <div className='pr-[5px] font-bold'>
                                 Vishnu :
                             </div>
-                            <a href={`tel:+918606645976`}>
+                            <a href={`tel:+918606645976`} className='font-bold'>
                                 +91 86606645976
                             </a>
                         </div>
                         <div className='flex'>
-                            <div className='pr-[5px]'>
+                            <div className='pr-[5px] font-bold'>
                                 Whatsapp:
                             </div>
-                            <a href={`tel:+918606645976`}>
+                            <a href={`tel:+918606645976`} className='font-bold'>
                                 +91 86606645976
                             </a>
                         </div>
