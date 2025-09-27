@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { getCurrentDay } from '../services/firestoreService';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import backgroundPng from '../assets/background.png';
 
 export default function WelcomePage() {
 	const navigate = useNavigate();
@@ -36,92 +37,99 @@ export default function WelcomePage() {
 
 			<div className="container mx-auto px-4 md:px-6 py-12">
 				{/* Hero Section */}
-				<div className="text-center mb-16">
-					<h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-						Treasure Hunt
-					</h1>
-					<p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-						Join our 10-day treasure hunt! One question per day, compete for the
-						fastest completion time, and climb the daily leaderboard.
-					</p>
+				<section className='relative h-screen'>
+					<img
+						src={backgroundPng}
+						alt="Background"
+						className="absolute left-[25%] h-[600px] w-[600px] z-[-0.2] opacity-40"
+						
+					/>
+					<div className="relative top-[19%] z-10 text-center mb-16">
+						<h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
+							ENIGMA
+						</h1>
+						<p className="text-lg md:text-xl text-white mb-8 max-w-3xl mx-auto">
+							Join our 10-day treasure hunt! One question per day, compete for the
+							fastest completion time, and climb the daily leaderboard.
+						</p>
 
-					{user ? (
-						<div className="flex flex-col sm:flex-row gap-4 justify-center">
-							<Button
-								onClick={() => navigate('/play')}
-								className="px-8 py-4 text-lg transition-transform duration-200 hover:scale-105 active:scale-95"
-							>
-								Start Today's Challenge
-							</Button>
-							<Button
-								onClick={() => navigate('/leaderboard')}
-								variant="outline"
-								className="px-8 py-4 text-lg"
-							>
-								View Leaderboard
-							</Button>
-						</div>
-					) : (
-						<div className="flex flex-col sm:flex-row gap-4 justify-center">
-							<Button
-								onClick={() => (window.location.href = '/signin')}
-								className="px-8 py-4 text-lg"
-							>
-								Sign In to Play
-							</Button>
-							<Button
-								onClick={() => (window.location.href = '/rules')}
-								variant="outline"
-								className="px-8 py-4 text-lg"
-							>
-								Read Rules
-							</Button>
+						{user ? (
+							<div className="flex flex-col sm:flex-row gap-4 justify-center">
+								<Button
+									onClick={() => navigate('/play')}
+									className="px-8 py-4 text-lg transition-transform duration-200 hover:scale-105 active:scale-95"
+								>
+									Start Today's Challenge
+								</Button>
+								<Button
+									onClick={() => navigate('/leaderboard')}
+									variant="outline"
+									className="px-8 py-4 text-lg"
+								>
+									View Leaderboard
+								</Button>
+							</div>
+						) : (
+							<div className="flex flex-col sm:flex-row gap-4 justify-center">
+								<Button
+									onClick={() => (window.location.href = '/signin')}
+									className="px-8 py-4 text-lg"
+								>
+									Sign In to Play
+								</Button>
+								<Button
+									onClick={() => (window.location.href = '/rules')}
+									variant="outline"
+									className="px-8 py-4 text-lg"
+								>
+									Read Rules
+								</Button>
+							</div>
+						)}
+					</div>
+				</section>
+
+					{/* Progress Section */}
+					{user && (
+						<div className="relative bg-card border z-10 rounded-lg p-8 mb-12">
+							<h2 className="text-2xl font-bold text-foreground mb-6 text-center">
+								Your Progress
+							</h2>
+
+							<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+								<div className="text-center">
+									<div className="text-3xl font-bold text-primary">
+										{completedDays}
+									</div>
+									<div className="text-muted-foreground">Days Completed</div>
+								</div>
+								<div className="text-center">
+									<div className="text-3xl font-bold text-primary">
+										Day {currentDay}
+									</div>
+									<div className="text-muted-foreground">Current Day</div>
+								</div>
+								<div className="text-center">
+									<div className="text-3xl font-bold text-primary">
+										{10 - completedDays}
+									</div>
+									<div className="text-muted-foreground">Days Remaining</div>
+								</div>
+							</div>
+
+							{/* Progress Bar */}
+							<div className="w-full bg-muted rounded-full h-3 mb-4">
+								<div
+									className="bg-primary h-3 rounded-full transition-all duration-500"
+									style={{ width: `${(completedDays / 10) * 100}%` }}
+								></div>
+							</div>
+							<p className="text-center text-muted-foreground">
+								{completedDays}/10 challenges completed (
+								{Math.round((completedDays / 10) * 100)}%)
+							</p>
 						</div>
 					)}
-				</div>
-
-				{/* Progress Section */}
-				{user && (
-					<div className="bg-card border rounded-lg p-8 mb-12">
-						<h2 className="text-2xl font-bold text-foreground mb-6 text-center">
-							Your Progress
-						</h2>
-
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-							<div className="text-center">
-								<div className="text-3xl font-bold text-primary">
-									{completedDays}
-								</div>
-								<div className="text-muted-foreground">Days Completed</div>
-							</div>
-							<div className="text-center">
-								<div className="text-3xl font-bold text-primary">
-									Day {currentDay}
-								</div>
-								<div className="text-muted-foreground">Current Day</div>
-							</div>
-							<div className="text-center">
-								<div className="text-3xl font-bold text-primary">
-									{10 - completedDays}
-								</div>
-								<div className="text-muted-foreground">Days Remaining</div>
-							</div>
-						</div>
-
-						{/* Progress Bar */}
-						<div className="w-full bg-muted rounded-full h-3 mb-4">
-							<div
-								className="bg-primary h-3 rounded-full transition-all duration-500"
-								style={{ width: `${(completedDays / 10) * 100}%` }}
-							></div>
-						</div>
-						<p className="text-center text-muted-foreground">
-							{completedDays}/10 challenges completed (
-							{Math.round((completedDays / 10) * 100)}%)
-						</p>
-					</div>
-				)}
-
 				{/* Features Grid */}
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
 					<div className="bg-card border rounded-lg p-6 text-center">
