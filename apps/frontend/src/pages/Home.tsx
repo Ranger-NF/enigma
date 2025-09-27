@@ -41,7 +41,7 @@ export default function WelcomePage() {
 					<img
 						src={backgroundPng}
 						alt="Background"
-						className="absolute left-[25%] h-[600px] w-[600px] z-[-0.2] opacity-40"
+						className="absolute bottom-[20%] left-[25%] h-[600px] w-[600px] z-[-0.2] opacity-40"
 						
 					/>
 					<div className="relative top-[19%] z-10 text-center mb-16">
