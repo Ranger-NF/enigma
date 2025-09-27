@@ -14,9 +14,11 @@ interface QuestionResponse {
   image?: string;
   attemptsLeft: number;
   maxAttempts: number;
+  isCompleted?: boolean;
+  cooldownSeconds?: number;
 }
 function PlayPage() {
-  const { user, userProgress, refreshUserProgress } = useAuth();
+  const { user, refreshUserProgress } = useAuth();
   const [currentDay, setCurrentDay] = useState(1);
   const [question, setQuestion] = useState("");
   const [hint, setHint] = useState("");
@@ -29,8 +31,7 @@ function PlayPage() {
 
   // Attempts-related UI state
   const [attemptsLeft, setAttemptsLeft] = useState<number>(0);
-  const [maxAttempts, setMaxAttempts] = useState(10);
-  const [isCooldown, setIsCooldown] = useState(false);
+  const [maxAttempts] = useState(10);
   const [cooldownMsg, setCooldownMsg] = useState("");
 
   useEffect(() => {
@@ -64,7 +65,7 @@ function PlayPage() {
 
       try {
         const token = await user.getIdToken();
-        const response = await fetch("http://localhost:5001/play", {
+        const response = await fetch("http://localhost:5000/play", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data: QuestionResponse = await response.json();
@@ -114,7 +115,7 @@ function PlayPage() {
 
     try {
       const token = await user?.getIdToken();
-      const response = await fetch("http://localhost:5001/play/submit", {
+      const response = await fetch("http://localhost:5000/play/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -160,8 +161,6 @@ function PlayPage() {
   ];
 
   const outOfAttempts = attemptsLeft <= 0;
-  const inputDisabled = isCompleted || loading || outOfAttempts || isCooldown;
-  const submitDisabled = inputDisabled || !answer.trim();
 
   return (
     <div className="min-h-screen bg-background">
@@ -231,7 +230,7 @@ function PlayPage() {
               </div>
             )}
 
-            {!isCompleted && isCooldown && cooldownMsg && (
+            {!isCompleted && cooldownSeconds > 0 && cooldownMsg && (
               <div className="mt-3 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-lg">
                 ⏱️ {cooldownMsg}
               </div>

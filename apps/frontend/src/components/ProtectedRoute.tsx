@@ -6,7 +6,7 @@ const ProtectedRoute = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <LoadingScreen isLoading={loading} />;
+    return <LoadingScreen isLoading={true} />;
   }
 
   return user ? <Outlet /> : <Navigate to="/signin" />;
