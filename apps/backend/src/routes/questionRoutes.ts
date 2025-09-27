@@ -30,11 +30,14 @@ const getNested = (obj: any, path: string, fallback: any) => {
 const MAX_ATTEMPTS_PER_DAY = 10;
 const WRONG_COOLDOWN_SECONDS = 30;
 
+
 router.get("/play", authMiddleware, async (req: Request, res: Response) => {
   const { db, getCurrentDay } = req.app.locals;
 
   try {
-    const currentDay = getCurrentDay();
+    // Allow requesting specific day via query parameter, otherwise use current day
+    const requestedDay = req.query.day ? parseInt(req.query.day as string) : null;
+    const currentDay = requestedDay || getCurrentDay();
     const questionRef = db.collection("questions").doc(`day${currentDay}`);
     const questionDoc = await questionRef.get();
 
@@ -52,6 +55,47 @@ router.get("/play", authMiddleware, async (req: Request, res: Response) => {
     const userRef = db.collection("users").doc(uid);
     const userDoc = await userRef.get();
     const userData = userDoc.exists ? userDoc.data() || {} : {};
+
+    // Check serial progression logic
+    let isUnlocked = true;
+    let lockReason = "";
+    let isCatchUp = false;
+
+    console.log(`Checking progression for day ${currentDay}, requestedDay: ${requestedDay}`);
+
+    if (currentDay > 1) {
+      const previousDayCompleted = !!getNested(
+        userData,
+        `completed.day${currentDay - 1}.done`,
+        false,
+      );
+      
+      console.log(`Previous day ${currentDay - 1} completed:`, previousDayCompleted);
+      
+      if (!previousDayCompleted) {
+        // If requesting a specific day (catch-up mode), only allow if it's a previous day or current day
+        if (requestedDay) {
+          // Only allow catch-up for days that are actually accessible
+          // Check if this is a previous day that should be accessible
+          const isPreviousDay = requestedDay < getCurrentDay();
+          const isCurrentDay = requestedDay === getCurrentDay();
+          
+          if (isPreviousDay || isCurrentDay) {
+            isCatchUp = true;
+            isUnlocked = true;
+            lockReason = `Catch-up mode: Complete Day ${currentDay - 1} first for proper sequence`;
+          } else {
+            // Future days should be locked even in catch-up mode
+            isUnlocked = false;
+            lockReason = `Complete Day ${currentDay - 1} to unlock this question`;
+          }
+        } else {
+          // If requesting current day, enforce strict progression
+          isUnlocked = false;
+          lockReason = `Complete Day ${currentDay - 1} to unlock this question`;
+        }
+      }
+    }
 
     const completedForDay = !!getNested(
       userData,
@@ -74,7 +118,7 @@ router.get("/play", authMiddleware, async (req: Request, res: Response) => {
       cooldownSeconds = Math.max(0, Math.ceil(diffMs / 1000));
     }
 
-    res.json({
+    const response = {
       id: questionDoc.id,
       day: currentDay,
       question: questionData.text,
@@ -85,10 +129,90 @@ router.get("/play", authMiddleware, async (req: Request, res: Response) => {
       isCompleted: completedForDay,
       attemptsLeft: Math.max(0, MAX_ATTEMPTS_PER_DAY - attemptCount),
       cooldownSeconds,
-    });
+      // Serial progression
+      isUnlocked,
+      lockReason,
+      isCatchUp,
+    };
+    
+    console.log(`Response for day ${currentDay}:`, { isUnlocked, isCatchUp, lockReason });
+    res.json(response);
   } catch (error) {
     console.error("Error fetching question:", error);
     res.status(500).json({ error: "Failed to fetch question" });
+  }
+});
+
+// Get user's progress across all days
+router.get("/progress", authMiddleware, async (req: Request, res: Response) => {
+  const { db, getCurrentDay } = req.app.locals;
+
+  try {
+    const uid = (req as any).user.uid as string;
+    const userRef = db.collection("users").doc(uid);
+    const userDoc = await userRef.get();
+    const userData = userDoc.exists ? userDoc.data() || {} : {};
+
+    const currentDay = getCurrentDay();
+    const progress = [];
+
+    for (let day = 1; day <= 10; day++) {
+      const isCompleted = !!getNested(
+        userData,
+        `completed.day${day}.done`,
+        false,
+      );
+      
+      const attemptCount = Number(
+        getNested(userData, `attempts.day${day}.count`, 0),
+      );
+
+      // Determine if this day is accessible
+      let isAccessible = true;
+      let reason = "";
+      
+      if (day > 1) {
+        const previousDayCompleted = !!getNested(
+          userData,
+          `completed.day${day - 1}.done`,
+          false,
+        );
+        
+        if (!previousDayCompleted) {
+          isAccessible = false;
+          reason = `Complete Day ${day - 1} first`;
+        }
+      }
+
+      progress.push({
+        day,
+        isCompleted,
+        isAccessible,
+        reason,
+        attemptsUsed: attemptCount,
+        attemptsLeft: Math.max(0, MAX_ATTEMPTS_PER_DAY - attemptCount),
+        isCurrentDay: day === currentDay,
+      });
+    }
+
+// Calculate additional helpful fields
+const nextAvailableDay = progress.find(p => !p.isCompleted && p.isAccessible)?.day || null;
+const allQuestionsComplete = progress.every(p => p.isCompleted || !p.isAccessible);
+const hasIncompleteAccessible = progress.some(p => !p.isCompleted && p.isAccessible);
+
+res.json({
+  currentDay,
+  progress,
+  totalCompleted: progress.filter(p => p.isCompleted).length,
+  totalDays: 10,
+  // New fields to help frontend navigation
+  nextAvailableDay,
+  allQuestionsComplete,
+  hasIncompleteAccessible,
+});
+  } catch (error) {
+    console.error("Error fetching progress:", error);
+    res.status(500).json({ error: "Failed to fetch progress" });
   }
 });
 
@@ -125,6 +249,24 @@ router.post(
       const userRef = db.collection("users").doc(uid);
       const userDoc = await userRef.get();
       const userData = userDoc.exists ? userDoc.data() || {} : {};
+
+      // Check serial progression - prevent submission to locked questions
+      const previousDay = day - 1;
+      if (day > 1) {
+        const previousDayCompleted = !!getNested(
+          userData,
+          `completed.day${previousDay}.done`,
+          false,
+        );
+        
+        if (!previousDayCompleted) {
+          return res.status(403).json({
+            result: `Complete Day ${previousDay} first to unlock this question`,
+            correct: false,
+            locked: true,
+          });
+        }
+      }
 
       // Prevent submissions if already completed
       const alreadyCompleted = !!getNested(

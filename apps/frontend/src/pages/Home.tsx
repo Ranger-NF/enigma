@@ -11,17 +11,38 @@ export default function WelcomePage() {
 	const [currentDay, setCurrentDay] = useState(1);
 	const [completedDays, setCompletedDays] = useState(0);
 
+	const fetchProgressFromAPI = async () => {
+		if (!user) return;
+		
+		try {
+			const token = await user.getIdToken();
+			const response = await fetch("http://localhost:5000/progress", {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			
+			if (response.ok) {
+				const data = await response.json();
+				setCompletedDays(data.totalCompleted || 0);
+			}
+		} catch (error) {
+			console.error("Error fetching progress from API:", error);
+		}
+	};
+
 	useEffect(() => {
 		const day = getCurrentDay();
 		setCurrentDay(day);
 
-		if (userProgress?.completed) {
+		// Try to get progress from API first, fallback to userProgress
+		if (user) {
+			fetchProgressFromAPI();
+		} else if (userProgress?.completed) {
 			const completed = Object.values(userProgress.completed).filter(
 				(day: any) => day.done
 			).length;
 			setCompletedDays(completed);
 		}
-	}, [userProgress]);
+	}, [user, userProgress]);
 
 	const navLinks = [
 		{ href: '/', label: 'Home', active: true },
