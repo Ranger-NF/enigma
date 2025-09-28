@@ -35,7 +35,7 @@ app.get("/test", (req, res) => {
 
 // Utility function
 const getCurrentDay = (): number => {
-  const startDate = new Date('2025-09-21');
+  const startDate = new Date('2025-09-30');
   const today = new Date();
   const diffTime = today.getTime() - startDate.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));

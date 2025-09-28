@@ -27,9 +27,15 @@ const getNested = (obj: any, path: string, fallback: any) => {
   );
 };
 
+// Helper to check if question is unlocked based on date
+const isQuestionUnlockedByDate = (unlockDate: admin.firestore.Timestamp): boolean => {
+  const now = new Date();
+  const unlockDateTime = unlockDate.toDate();
+  return now >= unlockDateTime;
+};
+
 const MAX_ATTEMPTS_PER_DAY = 10;
 const WRONG_COOLDOWN_SECONDS = 30;
-
 
 router.get("/play", authMiddleware, async (req: Request, res: Response) => {
   const { db, getCurrentDay } = req.app.locals;
@@ -49,6 +55,27 @@ router.get("/play", authMiddleware, async (req: Request, res: Response) => {
     }
 
     const questionData = questionDoc.data() as QuestionData;
+
+    // Check if question is unlocked by date
+    const isDateUnlocked = isQuestionUnlockedByDate(questionData.unlockDate);
+
+    if (!isDateUnlocked) {
+      return res.json({
+        id: questionDoc.id,
+        day: currentDay,
+        question: "",
+        hint: "",
+        difficulty: 0,
+        image: "",
+        isCompleted: false,
+        attemptsLeft: 0,
+        cooldownSeconds: 0,
+        isUnlocked: false,
+        lockReason: `This question will unlock on ${questionData.unlockDate.toDate().toLocaleString()}`,
+        isCatchUp: false,
+        dateLockedUntil: questionData.unlockDate.toDate().toISOString(),
+      });
+    }
 
     // Fetch user's attempt/completion status
     const uid = (req as any).user.uid as string;
@@ -157,6 +184,15 @@ router.get("/progress", authMiddleware, async (req: Request, res: Response) => {
     const progress = [];
 
     for (let day = 1; day <= 10; day++) {
+      const questionRef = db.collection("questions").doc(`day${day}`);
+      const questionDoc = await questionRef.get();
+      
+      let isDateUnlocked = true;
+      if (questionDoc.exists) {
+        const questionData = questionDoc.data() as QuestionData;
+        isDateUnlocked = isQuestionUnlockedByDate(questionData.unlockDate);
+      }
+
       const isCompleted = !!getNested(
         userData,
         `completed.day${day}.done`,
@@ -171,7 +207,15 @@ router.get("/progress", authMiddleware, async (req: Request, res: Response) => {
       let isAccessible = true;
       let reason = "";
       
-      if (day > 1) {
+      // First check date unlock
+      if (!isDateUnlocked) {
+        isAccessible = false;
+        reason = `Unlocks ${questionDoc.exists ? 
+          (questionDoc.data() as QuestionData).unlockDate.toDate().toLocaleDateString() : 
+          'soon'
+        }`;
+      } else if (day > 1) {
+        // Then check serial progression
         const previousDayCompleted = !!getNested(
           userData,
           `completed.day${day - 1}.done`,
@@ -192,24 +236,24 @@ router.get("/progress", authMiddleware, async (req: Request, res: Response) => {
         attemptsUsed: attemptCount,
         attemptsLeft: Math.max(0, MAX_ATTEMPTS_PER_DAY - attemptCount),
         isCurrentDay: day === currentDay,
+        isDateUnlocked,
       });
     }
 
-// Calculate additional helpful fields
-const nextAvailableDay = progress.find(p => !p.isCompleted && p.isAccessible)?.day || null;
-const allQuestionsComplete = progress.every(p => p.isCompleted || !p.isAccessible);
-const hasIncompleteAccessible = progress.some(p => !p.isCompleted && p.isAccessible);
+    // Calculate additional helpful fields
+    const nextAvailableDay = progress.find(p => !p.isCompleted && p.isAccessible)?.day || null;
+    const allQuestionsComplete = progress.every(p => p.isCompleted || !p.isAccessible);
+    const hasIncompleteAccessible = progress.some(p => !p.isCompleted && p.isAccessible);
 
-res.json({
-  currentDay,
-  progress,
-  totalCompleted: progress.filter(p => p.isCompleted).length,
-  totalDays: 10,
-  // New fields to help frontend navigation
-  nextAvailableDay,
-  allQuestionsComplete,
-  hasIncompleteAccessible,
-});
+    res.json({
+      currentDay,
+      progress,
+      totalCompleted: progress.filter(p => p.isCompleted).length,
+      totalDays: 10,
+      nextAvailableDay,
+      allQuestionsComplete,
+      hasIncompleteAccessible,
+    });
   } catch (error) {
     console.error("Error fetching progress:", error);
     res.status(500).json({ error: "Failed to fetch progress" });
@@ -244,6 +288,18 @@ router.post(
 
       if (!questionData?.answer) {
         return res.status(500).json({ result: "Question data is corrupted" });
+      }
+
+      // Check if question is unlocked by date
+      const isDateUnlocked = isQuestionUnlockedByDate(questionData.unlockDate);
+
+      if (!isDateUnlocked) {
+        return res.status(403).json({
+          result: `This question is not yet available. It unlocks on ${questionData.unlockDate.toDate().toLocaleString()}`,
+          correct: false,
+          locked: true,
+          dateLockedUntil: questionData.unlockDate.toDate().toISOString(),
+        });
       }
 
       const userRef = db.collection("users").doc(uid);
