@@ -64,9 +64,12 @@ function PlayPage() {
 
       try {
         const token = await user.getIdToken();
-        const response = await fetch("http://localhost:5001/play", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_SERVER_URL || "http://localhost:5000"}/play`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         const data: QuestionResponse = await response.json();
 
         if (!response.ok || "error" in data) {
@@ -114,14 +117,17 @@ function PlayPage() {
 
     try {
       const token = await user?.getIdToken();
-      const response = await fetch("http://localhost:5001/play/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_SERVER_URL || "http://localhost:5000"}/play/submit`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ day: currentDay, answer }),
         },
-        body: JSON.stringify({ day: currentDay, answer }),
-      });
+      );
       const status = response.status;
       const data = await response.json();
       setResult(data.result);
