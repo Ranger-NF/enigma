@@ -158,20 +158,13 @@ function PlayPage() {
     }
   };
 
-  const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/rules", label: "Rules" },
-    { href: "/leaderboard", label: "Leaderboard" },
-    { href: "/play", label: "Play", active: true },
-  ];
-
   const outOfAttempts = attemptsLeft <= 0;
   const inputDisabled = isCompleted || loading || outOfAttempts || isCooldown;
   const submitDisabled = inputDisabled || !answer.trim();
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar01 navigationLinks={navLinks} />
+      <Navbar01 />
 
       <div className="container mx-auto px-4 md:px-6 py-8">
         <div className="max-w-2xl mx-auto space-y-6">

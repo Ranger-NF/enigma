@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { ModeToggle } from "@/components/mode-toggle";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { signOut, signInWithPopup } from "firebase/auth";
@@ -101,12 +101,11 @@ export interface Navbar01Props extends React.HTMLAttributes<HTMLElement> {
   signInHref?: string;
 }
 
-// Default navigation links
 const defaultNavigationLinks: Navbar01NavLink[] = [
   { href: "/", label: "Home", active: true },
-  { href: "/rules", label: "Rules" },
+  { href: "/#rules", label: "Rules" },
   { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/play", label: "Contact" },
+  { href: "/play", label: "Play" },
 ];
 
 export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
@@ -121,6 +120,37 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
   ) => {
     const [isMobile, setIsMobile] = useState(false);
     const containerRef = useRef<HTMLElement>(null);
+    const location = useLocation();
+    const [activeLink, setActiveLink] = useState(
+      location.pathname + location.hash,
+    );
+
+    const navScroll = (
+      e: React.MouseEvent<HTMLButtonElement>,
+      link: Navbar01NavLink,
+    ) => {
+      const [path, hash] = link.href.split("#");
+      e.preventDefault();
+
+      if (hash && location.pathname === (path || "/")) {
+        // same page → scroll
+        const el = document.querySelector(`#${hash}`);
+        el?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        // different page → navigate
+        navigate(link.href);
+        if (hash) {
+          setTimeout(() => {
+            const el = document.querySelector(`#${hash}`);
+            el?.scrollIntoView({ behavior: "smooth" });
+          }, 200); // tweak delay (50–150ms usually works)
+        }
+      }
+    };
+
+    useEffect(() => {
+      setActiveLink(location.pathname + location.hash);
+    }, [location]);
 
     useEffect(() => {
       const checkWidth = () => {
@@ -206,12 +236,12 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
                       {navigationLinks.map((link, index) => (
                         <NavigationMenuItem key={index} className="w-full">
                           <button
-                            onClick={() => navigate(link.href)}
+                            onClick={(e) => navScroll(e, link)}
                             className={cn(
-                              "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer no-underline",
-                              link.active
+                              "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer no-underline",
+                              activeLink === link.href
                                 ? "bg-accent text-accent-foreground"
-                                : "text-foreground/80",
+                                : "text-foreground/80 hover:text-foreground",
                             )}
                           >
                             {link.label}
@@ -241,10 +271,10 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
                     {navigationLinks.map((link, index) => (
                       <NavigationMenuItem key={index}>
                         <button
-                          onClick={() => navigate(link.href)}
+                          onClick={(e) => navScroll(e, link)}
                           className={cn(
                             "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer no-underline",
-                            link.active
+                            activeLink === link.href
                               ? "bg-accent text-accent-foreground"
                               : "text-foreground/80 hover:text-foreground",
                           )}
