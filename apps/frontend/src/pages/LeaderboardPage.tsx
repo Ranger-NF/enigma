@@ -1,7 +1,10 @@
 import { Navbar01 } from "@/components/ui/shadcn-io/navbar-01";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getCurrentDay, getDailyLeaderboard } from "../services/firestoreService";
+import {
+  getCurrentDay,
+  getDailyLeaderboard,
+} from "../services/firestoreService";
 import { Button } from "@/components/ui/button";
 
 interface LeaderboardEntry {
@@ -20,13 +23,6 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true);
   const [userRank, setUserRank] = useState<number | null>(null);
 
-  const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/rules', label: 'Rules' },
-    { href: '/leaderboard', label: 'Leaderboard', active: true },
-    { href: '/play', label: 'Play' },
-  ];
-
   useEffect(() => {
     const day = getCurrentDay();
     setCurrentDay(day);
@@ -39,14 +35,14 @@ export default function LeaderboardPage() {
     try {
       const data = await getDailyLeaderboard(day, 20);
       setLeaderboard(data);
-      
+
       // Find user's rank
       if (user) {
-        const userEntry = data.find(entry => entry.id === user.uid);
+        const userEntry = data.find((entry) => entry.id === user.uid);
         setUserRank(userEntry ? userEntry.rank : null);
       }
     } catch (error) {
-      console.error('Error fetching leaderboard:', error);
+      console.error("Error fetching leaderboard:", error);
     } finally {
       setLoading(false);
     }
@@ -59,30 +55,32 @@ export default function LeaderboardPage() {
   };
 
   const formatTime = (timestamp: any) => {
-    if (!timestamp) return 'N/A';
+    if (!timestamp) return "N/A";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      second: '2-digit'
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
   };
 
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return '🥇';
-    if (rank === 2) return '🥈';
-    if (rank === 3) return '🥉'; // <-- Fix here
+    if (rank === 1) return "🥇";
+    if (rank === 2) return "🥈";
+    if (rank === 3) return "🥉"; // <-- Fix here
     return `#${rank}`;
   };
 
   return (
     <div className="relative w-full min-h-screen bg-background">
-      <Navbar01 navigationLinks={navLinks} />
-      
+      <Navbar01 />
+
       <div className="container mx-auto px-4 md:px-6 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-4">Daily Leaderboard</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-4">
+            Daily Leaderboard
+          </h1>
           <p className="text-muted-foreground text-lg">
             See who completed today's challenge the fastest!
           </p>
@@ -90,26 +88,28 @@ export default function LeaderboardPage() {
 
         {/* Day Selector */}
         <div className="bg-card border rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold text-foreground mb-4">Select Day</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-4">
+            Select Day
+          </h2>
           <div className="flex flex-wrap gap-2">
             {Array.from({ length: 10 }, (_, i) => {
               const day = i + 1;
               const isCurrentDay = day === currentDay;
               const isSelected = day === selectedDay;
-              
+
               return (
                 <Button
                   key={day}
                   onClick={() => handleDayChange(day)}
                   variant={isSelected ? "default" : "outline"}
                   className={`${
-                    isCurrentDay && !isSelected 
-                      ? 'bg-primary/10 border-primary text-primary hover:bg-primary/20' 
-                      : ''
+                    isCurrentDay && !isSelected
+                      ? "bg-primary/10 border-primary text-primary hover:bg-primary/20"
+                      : ""
                   }`}
                 >
                   Day {day}
-                  {isCurrentDay && ' (Today)'}
+                  {isCurrentDay && " (Today)"}
                 </Button>
               );
             })}
@@ -122,11 +122,11 @@ export default function LeaderboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold">Your Ranking</h3>
-                <p className="text-sm">You're currently ranked #{userRank} for Day {selectedDay}</p>
+                <p className="text-sm">
+                  You're currently ranked #{userRank} for Day {selectedDay}
+                </p>
               </div>
-              <div className="text-2xl">
-                {getRankIcon(userRank)}
-              </div>
+              <div className="text-2xl">{getRankIcon(userRank)}</div>
             </div>
           </div>
         )}
@@ -136,24 +136,27 @@ export default function LeaderboardPage() {
           <div className="bg-muted px-6 py-4">
             <h2 className="text-xl font-semibold text-foreground">
               Day {selectedDay} Leaderboard
-              {selectedDay === currentDay && ' (Today)'}
+              {selectedDay === currentDay && " (Today)"}
             </h2>
           </div>
-          
+
           {loading ? (
             <div className="p-8 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="text-muted-foreground mt-2">Loading leaderboard...</p>
+              <p className="text-muted-foreground mt-2">
+                Loading leaderboard...
+              </p>
             </div>
           ) : leaderboard.length === 0 ? (
             <div className="p-8 text-center">
               <div className="text-6xl mb-4">📊</div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">No completions yet</h3>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                No completions yet
+              </h3>
               <p className="text-muted-foreground">
-                {selectedDay === currentDay 
+                {selectedDay === currentDay
                   ? "Be the first to complete today's challenge!"
-                  : `No one completed Day ${selectedDay} yet.`
-                }
+                  : `No one completed Day ${selectedDay} yet.`}
               </p>
             </div>
           ) : (
@@ -162,7 +165,7 @@ export default function LeaderboardPage() {
                 <div
                   key={entry.id}
                   className={`px-6 py-4 flex items-center justify-between ${
-                    user && entry.id === user.uid ? 'bg-primary/5' : ''
+                    user && entry.id === user.uid ? "bg-primary/5" : ""
                   }`}
                 >
                   <div className="flex items-center space-x-4">
@@ -171,14 +174,18 @@ export default function LeaderboardPage() {
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-foreground">
-                        {entry.name || 'Anonymous'}
-                        {user && entry.id === user.uid && ' (You)'}
+                        {entry.name || "Anonymous"}
+                        {user && entry.id === user.uid && " (You)"}
                       </h3>
-                      <p className="text-sm text-muted-foreground">{entry.email}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {entry.email}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Completed at</p>
+                    <p className="text-sm text-muted-foreground">
+                      Completed at
+                    </p>
                     <p className="text-lg font-semibold text-foreground">
                       {formatTime(entry.completedAt)}
                     </p>
@@ -193,18 +200,24 @@ export default function LeaderboardPage() {
         {leaderboard.length > 0 && (
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-card border rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-foreground">{leaderboard.length}</div>
-              <div className="text-sm text-muted-foreground">Total Completions</div>
+              <div className="text-2xl font-bold text-foreground">
+                {leaderboard.length}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Total Completions
+              </div>
             </div>
             <div className="bg-card border rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-foreground">
-                {leaderboard.length > 0 ? formatTime(leaderboard[0].completedAt) : 'N/A'}
+                {leaderboard.length > 0
+                  ? formatTime(leaderboard[0].completedAt)
+                  : "N/A"}
               </div>
               <div className="text-sm text-muted-foreground">Fastest Time</div>
             </div>
             <div className="bg-card border rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-foreground">
-                {selectedDay === currentDay ? 'Live' : 'Final'}
+                {selectedDay === currentDay ? "Live" : "Final"}
               </div>
               <div className="text-sm text-muted-foreground">Status</div>
             </div>
