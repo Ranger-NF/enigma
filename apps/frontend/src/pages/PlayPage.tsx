@@ -14,7 +14,33 @@ interface QuestionResponse {
   image?: string;
   attemptsLeft: number;
   maxAttempts: number;
+  isCompleted?: boolean;
+  cooldownSeconds?: number;
+  isUnlocked?: boolean;
+  lockReason?: string;
+  isCatchUp?: boolean;
+  dateLockedUntil?: string; // ISO string of unlock date
 }
+
+interface ProgressResponse {
+  currentDay: number;
+  progress: Array<{
+    day: number;
+    isCompleted: boolean;
+    isAccessible: boolean;
+    reason: string;
+    attemptsUsed: number;
+    attemptsLeft: number;
+    isCurrentDay: boolean;
+    isDateUnlocked: boolean;
+  }>;
+  totalCompleted: number;
+  totalDays: number;
+  nextAvailableDay?: number | null;
+  allQuestionsComplete?: boolean;
+  hasIncompleteAccessible?: boolean;
+}
+
 function PlayPage() {
   const { user, userProgress, refreshUserProgress } = useAuth();
   const [currentDay, setCurrentDay] = useState(1);
@@ -26,78 +52,169 @@ function PlayPage() {
   const [isCompleted, setIsCompleted] = useState(false);
   const [difficulty, setDifficulty] = useState(1);
   const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
-
-  // Attempts-related UI state
   const [attemptsLeft, setAttemptsLeft] = useState<number>(0);
   const [maxAttempts, setMaxAttempts] = useState(10);
   const [isCooldown, setIsCooldown] = useState(false);
   const [cooldownMsg, setCooldownMsg] = useState("");
 
-  useEffect(() => {
-    const day = getCurrentDay();
-    setCurrentDay(day);
-
-    const checkCompletion = async () => {
-      if (user) {
-        const completed = await isDayCompleted(user.uid, day);
-        setIsCompleted(completed);
-      }
-    };
-
-    checkCompletion();
-  }, [user]);
+  // New state for enhanced navigation and unlock date handling
+  const [displayDay, setDisplayDay] = useState(1);
+  const [recommendedDay, setRecommendedDay] = useState<number | null>(null);
+  const [isUnlocked, setIsUnlocked] = useState(true);
+  const [lockReason, setLockReason] = useState("");
+  const [isCatchUp, setIsCatchUp] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
+  const [userProgressData, setUserProgressData] = useState<ProgressResponse | null>(null);
+  const [questionLoading, setQuestionLoading] = useState(false);
+  const [dateLockedUntil, setDateLockedUntil] = useState<string | null>(null);
 
   useEffect(() => {
     if (cooldownSeconds <= 0) return;
     const interval = setInterval(() => {
-      setCooldownSeconds((prev) => {
-        const next = Math.max(0, prev - 1);
-        return next;
-      });
+      setCooldownSeconds((prev) => Math.max(0, prev - 1));
     }, 1000);
     return () => clearInterval(interval);
   }, [cooldownSeconds]);
 
-  useEffect(() => {
-    const fetchQuestion = async () => {
-      if (!user) return;
+  const fetchProgress = async (): Promise<ProgressResponse | null> => {
+    if (!user) return null;
 
-      try {
-        const token = await user.getIdToken();
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_SERVER_URL || "http://localhost:5000"}/play`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
-        const data: QuestionResponse = await response.json();
-
-        if (!response.ok || "error" in data) {
-          setResult((data as any).error || "Error loading question");
-          return;
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_SERVER_URL || "http://localhost:5000"}/progress`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
         }
+      );
+      const data: ProgressResponse = await response.json();
 
+      if (response.ok) {
+        setUserProgressData(data);
+        return data;
+      } else {
+        console.error("Failed to fetch progress:", data);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error fetching progress:", error);
+      return null;
+    }
+  };
+
+  const findNextAvailableQuestion = (progressData: ProgressResponse): number => {
+    const nextIncomplete = progressData.progress.find(day => 
+      !day.isCompleted && day.isAccessible
+    );
+    
+    if (nextIncomplete) {
+      return nextIncomplete.day;
+    }
+    
+    return progressData.currentDay;
+  };
+
+  const fetchQuestion = async (day?: number) => {
+    if (!user) return;
+
+    setQuestionLoading(true);
+    setResult("");
+    
+    try {
+      const token = await user.getIdToken();
+      const url = day 
+        ? `${import.meta.env.VITE_BACKEND_SERVER_URL || "http://localhost:5000"}/play?day=${day}`
+        : `${import.meta.env.VITE_BACKEND_SERVER_URL || "http://localhost:5000"}/play`;
+      
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("API Error:", errorData);
+        setResult(errorData.error || `Server error: ${response.status}`);
+        return;
+      }
+
+      const data: QuestionResponse = await response.json();
+
+      setDisplayDay(data.day);
+      setCurrentDay(data.day);
+
+      // Handle unlock date logic
+      if (data.dateLockedUntil) {
+        setDateLockedUntil(data.dateLockedUntil);
+        setIsUnlocked(false);
+        setLockReason(data.lockReason || "This question is not yet available");
+        setQuestion("");
+        setHint("");
+        setDifficulty(1);
+        setAnswer("");
+      } else if (data.isUnlocked || data.isCatchUp) {
         setQuestion(data.question || "");
         setHint(data.hint || "");
         setDifficulty(data.difficulty || 1);
-        if (typeof data.isCompleted === "boolean")
-          setIsCompleted(data.isCompleted);
-        if (typeof data.attemptsLeft === "number")
-          setAttemptsLeft(data.attemptsLeft);
-        if (typeof data.cooldownSeconds === "number")
-          setCooldownSeconds(data.cooldownSeconds || 0);
-      } catch (error) {
-        console.error("Error fetching question:", error);
-        setResult("Error loading question");
+        setDateLockedUntil(null);
+      } else {
+        setQuestion("");
+        setHint("");
+        setDifficulty(1);
+        setAnswer("");
+        setDateLockedUntil(null);
       }
-    };
 
-    fetchQuestion();
-  }, [user, currentDay]);
+      setIsCompleted(data.isCompleted || false);
+      setAttemptsLeft(data.attemptsLeft || 0);
+      setCooldownSeconds(data.cooldownSeconds || 0);
+      setIsUnlocked(data.isUnlocked || false);
+      setLockReason(data.lockReason || "");
+      setIsCatchUp(data.isCatchUp || false);
+
+    } catch (error) {
+      console.error("Error fetching question:", error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        setResult("Cannot connect to server. Please make sure the backend is running.");
+      } else {
+        setResult("Error loading question: " + (error instanceof Error ? error.message : 'Unknown error'));
+      }
+    } finally {
+      setQuestionLoading(false);
+    }
+  };
+
+  const initializePage = async () => {
+    if (!user) return;
+
+    const progressData = await fetchProgress();
+    if (!progressData) return;
+
+    const nextDay = findNextAvailableQuestion(progressData);
+    setRecommendedDay(nextDay);
+
+    await fetchQuestion(nextDay);
+  };
+
+  useEffect(() => {
+    if (user) {
+      initializePage();
+    }
+  }, [user]);
 
   const submitAnswer = async () => {
     if (!answer.trim()) {
       setResult("Please enter an answer");
+      return;
+    }
+
+    if (!isUnlocked && !isCatchUp) {
+      setResult(lockReason || "This question is locked");
+      return;
+    }
+
+    if (dateLockedUntil) {
+      const unlockDate = new Date(dateLockedUntil);
+      setResult(`This question unlocks on ${unlockDate.toLocaleString()}`);
       return;
     }
 
@@ -106,7 +223,7 @@ function PlayPage() {
       return;
     }
 
-    if (attemptsLeft !== null && attemptsLeft <= 0) {
+    if (attemptsLeft <= 0) {
       setResult("Attempt limit reached for today");
       return;
     }
@@ -125,30 +242,32 @@ function PlayPage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ day: currentDay, answer }),
-        },
+          body: JSON.stringify({ day: displayDay, answer }),
+        }
       );
-      const status = response.status;
+      
       const data = await response.json();
       setResult(data.result);
 
-      if (status === 429) {
-        if (typeof data.cooldownSeconds === "number")
-          setCooldownSeconds(data.cooldownSeconds || 0);
-        if (typeof data.attemptsLeft === "number")
-          setAttemptsLeft(data.attemptsLeft);
+      if (response.status === 429) {
+        setCooldownSeconds(data.cooldownSeconds || 0);
+        setAttemptsLeft(data.attemptsLeft || 0);
         return;
       }
 
       if (data.correct) {
         setIsCompleted(true);
-        setAnswer(""); // Clear the input
+        setAnswer("");
         await refreshUserProgress();
+        
+        const updatedProgress = await fetchProgress();
+        if (updatedProgress) {
+          const nextDay = findNextAvailableQuestion(updatedProgress);
+          setRecommendedDay(nextDay);
+        }
       } else {
-        if (typeof data.attemptsLeft === "number")
-          setAttemptsLeft(data.attemptsLeft);
-        if (typeof data.cooldownSeconds === "number")
-          setCooldownSeconds(data.cooldownSeconds || 0);
+        setAttemptsLeft(data.attemptsLeft || 0);
+        setCooldownSeconds(data.cooldownSeconds || 0);
       }
     } catch (error) {
       console.error("Error submitting answer:", error);
@@ -158,9 +277,41 @@ function PlayPage() {
     }
   };
 
+  const handleDaySelect = async (day: number) => {
+    setResult("");
+    await fetchQuestion(day);
+    setShowProgress(false);
+  };
+
+  const handleNextQuestion = async () => {
+    if (recommendedDay && recommendedDay !== displayDay) {
+      await fetchQuestion(recommendedDay);
+    } else {
+      setShowProgress(true);
+      await fetchProgress();
+    }
+  };
+
+  const goToRecommendedQuestion = async () => {
+    if (recommendedDay) {
+      await fetchQuestion(recommendedDay);
+    }
+  };
+
+  const navLinks = [
+    { href: "/", label: "Home" },
+    { href: "/rules", label: "Rules" },
+    { href: "/leaderboard", label: "Leaderboard" },
+    { href: "/play", label: "Play", active: true },
+  ];
+
   const outOfAttempts = attemptsLeft <= 0;
-  const inputDisabled = isCompleted || loading || outOfAttempts || isCooldown;
-  const submitDisabled = inputDisabled || !answer.trim();
+  const calendarDay = getCurrentDay();
+  const hasAvailableQuestions = userProgressData?.progress.some(day => 
+    !day.isCompleted && day.isAccessible
+  ) || false;
+
+  const isDateLocked = dateLockedUntil && new Date() < new Date(dateLockedUntil);
 
   return (
     <div className="min-h-screen bg-background">
@@ -168,165 +319,354 @@ function PlayPage() {
 
       <div className="container mx-auto px-4 md:px-6 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
+          {/* Header with day indicator and progress dots */}
           <div className="bg-card border rounded-lg p-6">
             <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl font-bold text-foreground">
-                Day {currentDay} of 10
-              </h1>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">
+                  Day {displayDay} of 10
+                </h1>
+                {recommendedDay && recommendedDay !== displayDay && (
+                  <p className="text-sm text-muted-foreground">
+                    Recommended: Day {recommendedDay}
+                    <Button 
+                      variant="link" 
+                      size="sm" 
+                      onClick={goToRecommendedQuestion}
+                      className="ml-2 h-auto p-0 text-blue-600"
+                    >
+                      Go there →
+                    </Button>
+                  </p>
+                )}
+              </div>
               <div className="flex space-x-2">
-                {Array.from({ length: 10 }, (_, i) => (
-                  <div
-                    key={i + 1}
-                    className={`w-3 h-3 rounded-full ${
-                      i + 1 < currentDay
-                        ? "bg-primary"
-                        : i + 1 === currentDay
-                          ? "bg-primary/60"
-                          : "bg-muted"
-                    }`}
-                  />
-                ))}
+                {Array.from({ length: 10 }, (_, i) => {
+                  const dayNum = i + 1;
+                  const dayProgress = userProgressData?.progress.find(p => p.day === dayNum);
+                  return (
+                    <div
+                      key={dayNum}
+                      className={`w-3 h-3 rounded-full ${
+                        dayProgress?.isCompleted
+                          ? "bg-green-500"
+                          : dayNum === displayDay
+                            ? "bg-primary"
+                            : dayNum <= calendarDay
+                              ? "bg-primary/40"
+                              : "bg-muted"
+                      }`}
+                      title={`Day ${dayNum}${dayProgress?.isCompleted ? ' (completed)' : ''}`}
+                    />
+                  );
+                })}
               </div>
             </div>
 
+            {/* Status indicators */}
             <div className="flex flex-wrap items-center gap-3">
-              {typeof attemptsLeft === "number" && (
-                <span className="px-3 py-1 rounded-full text-sm border bg-muted/30">
-                  Attempts left: <strong>{attemptsLeft}</strong>
-                </span>
-              )}
+              <span className="px-3 py-1 rounded-full text-sm border bg-muted/30">
+                Attempts left: <strong>{attemptsLeft}</strong>
+              </span>
               {cooldownSeconds > 0 && (
                 <span className="px-3 py-1 rounded-full text-sm border bg-yellow-50 text-yellow-800">
-                  ⏳ Cooldown: {cooldownSeconds}s
+                  Cooldown: {cooldownSeconds}s
                 </span>
               )}
               {isCompleted && (
                 <span className="px-3 py-1 rounded-full text-sm border bg-green-50 text-green-800">
-                  ✅ Completed
+                  Completed
+                </span>
+              )}
+              {isCatchUp && (
+                <span className="px-3 py-1 rounded-full text-sm border bg-blue-50 text-blue-800">
+                  Catch-up Mode
+                </span>
+              )}
+              {isDateLocked && (
+                <span className="px-3 py-1 rounded-full text-sm border bg-orange-50 text-orange-800">
+                  Date Locked
                 </span>
               )}
             </div>
 
-            {isCompleted && (
-              <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded-lg mt-4">
-                ✅ You've completed today's challenge! Check the leaderboard to
-                see your ranking.
-              </div>
-            )}
-
-            {!isCompleted && (
-              <div
-                className={`${
-                  outOfAttempts
-                    ? "bg-red-50 border-red-200 text-red-800"
-                    : attemptsLeft <= 3
-                      ? "bg-yellow-50 border-yellow-200 text-yellow-800"
-                      : "bg-blue-50 border-blue-200 text-blue-800"
-                } border px-4 py-2 rounded-lg`}
-              >
-                {outOfAttempts
-                  ? "❌ No attempts left for today"
-                  : `💪 Attempts remaining: ${attemptsLeft} of ${maxAttempts}`}
-              </div>
-            )}
-
-            {!isCompleted && isCooldown && cooldownMsg && (
-              <div className="mt-3 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-lg">
-                ⏱️ {cooldownMsg}
-              </div>
-            )}
-          </div>
-
-          <div className="bg-card border rounded-lg p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-foreground">
-                Today's Challenge
-              </h2>
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-full">
-                  Difficulty: {difficulty}/5
-                </span>
-                <span
-                  className={`px-3 py-1 text-sm rounded-full ${
-                    outOfAttempts
-                      ? "bg-destructive/20 text-destructive"
-                      : attemptsLeft <= 3
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-secondary text-secondary-foreground"
-                  }`}
-                >
-                  {outOfAttempts
-                    ? "No attempts"
-                    : `${attemptsLeft}/${maxAttempts} left`}
-                </span>
-              </div>
-            </div>
-
-            <p className="text-lg text-foreground mb-4">{question}</p>
-            <p className="text-sm text-muted-foreground">💡 Hint: {hint}</p>
-          </div>
-
-          {!isCompleted ? (
-            <div className="space-y-4">
-              <Input
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                placeholder="Enter your answer here..."
-                className="text-lg"
-                onKeyPress={(e) =>
-                  e.key === "Enter" &&
-                  !loading &&
-                  cooldownSeconds === 0 &&
-                  (attemptsLeft ?? 1) > 0 &&
-                  submitAnswer()
-                }
-                disabled={
-                  cooldownSeconds > 0 ||
-                  (attemptsLeft !== null && attemptsLeft <= 0)
-                }
-              />
+            {/* Quick navigation */}
+            <div className="mt-4 flex gap-2">
               <Button
-                onClick={submitAnswer}
-                disabled={
-                  loading ||
-                  !answer.trim() ||
-                  cooldownSeconds > 0 ||
-                  (attemptsLeft !== null && attemptsLeft <= 0)
-                }
-                className="w-full py-4 text-lg"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowProgress(!showProgress);
+                  if (!showProgress) fetchProgress();
+                }}
               >
-                {loading
-                  ? "Submitting..."
-                  : cooldownSeconds > 0
-                    ? `Wait ${cooldownSeconds}s`
-                    : attemptsLeft !== null && attemptsLeft <= 0
-                      ? "No attempts left"
-                      : "Submit Answer"}
+                {showProgress ? "Hide Progress" : "Show All Days"}
               </Button>
+              
+              {recommendedDay && recommendedDay !== displayDay && (
+                <Button
+                  size="sm"
+                  onClick={goToRecommendedQuestion}
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Go to Day {recommendedDay}
+                </Button>
+              )}
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="text-6xl mb-4">🎉</div>
-              <h3 className="text-2xl font-bold text-primary mb-2">
-                Challenge Completed!
+          </div>
+
+          {/* Progress Display */}
+          {showProgress && (
+            <div className="bg-card border rounded-lg p-6">
+              <h3 className="text-xl font-semibold text-foreground mb-4">
+                Your Progress ({userProgressData?.totalCompleted || 0}/{userProgressData?.totalDays || 10} completed)
               </h3>
-              <p className="text-muted-foreground">
-                Come back tomorrow for the next challenge!
-              </p>
+              
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>How it works:</strong> Questions unlock by date and must be completed in order. Click on available (blue) questions to work on them.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {userProgressData?.progress.map((day) => (
+                  <div
+                    key={day.day}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      day.isCompleted
+                        ? "bg-green-50 border-green-200 text-green-800"
+                        : day.isAccessible && day.isDateUnlocked
+                          ? "bg-blue-50 border-blue-200 text-blue-800 hover:bg-blue-100"
+                          : !day.isDateUnlocked
+                            ? "bg-orange-50 border-orange-200 text-orange-500"
+                            : "bg-gray-50 border-gray-200 text-gray-500"
+                    } ${
+                      day.day === displayDay ? "ring-2 ring-primary" : ""
+                    }`}
+                    onClick={() => day.isAccessible && day.isDateUnlocked && handleDaySelect(day.day)}
+                  >
+                    <div className="text-center">
+                      <div className="text-lg font-bold">Day {day.day}</div>
+                      <div className="text-xs">
+                        {day.isCompleted ? (
+                          <span className="text-green-600">Completed</span>
+                        ) : !day.isDateUnlocked ? (
+                          <span className="text-orange-600">Date Locked</span>
+                        ) : day.isAccessible ? (
+                          <span className="text-blue-600">
+                            {day.day === recommendedDay ? "Recommended" : "Available"}
+                          </span>
+                        ) : (
+                          <span className="text-gray-500">Locked</span>
+                        )}
+                      </div>
+                      {day.reason && (
+                        <div className="text-xs text-gray-400 mt-1">{day.reason}</div>
+                      )}
+                      {day.isAccessible && !day.isCompleted && day.isDateUnlocked && (
+                        <div className="text-xs text-blue-600 mt-1">
+                          {day.attemptsLeft} attempts left
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Date Locked Display */}
+          {isDateLocked && (
+            <div className="bg-card border rounded-lg p-6">
+              <div className="text-center py-8">
+                <div className="text-6xl mb-4">⏰</div>
+                <h3 className="text-2xl font-bold text-orange-600 mb-2">Question Not Yet Available</h3>
+                <p className="text-muted-foreground mb-4">
+                  This question will unlock on {new Date(dateLockedUntil!).toLocaleString()}
+                </p>
+                
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-orange-800">
+                    Questions are released on a schedule. Please check back later!
+                  </p>
+                </div>
+                
+                <div className="flex gap-3 justify-center">
+                  {recommendedDay && (
+                    <Button
+                      onClick={() => fetchQuestion(recommendedDay)}
+                      className="bg-primary text-primary-foreground"
+                    >
+                      Go to Day {recommendedDay}
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowProgress(true);
+                      fetchProgress();
+                    }}
+                  >
+                    Show All Days
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Question Display */}
+          {(isUnlocked || isCatchUp) && !isDateLocked && (
+            <>
+              <div className="bg-card border rounded-lg p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-foreground">
+                    Day {displayDay} Challenge
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-full">
+                      Difficulty: {difficulty}/5
+                    </span>
+                    <span
+                      className={`px-3 py-1 text-sm rounded-full ${
+                        outOfAttempts
+                          ? "bg-destructive/20 text-destructive"
+                          : attemptsLeft <= 3
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-secondary text-secondary-foreground"
+                      }`}
+                    >
+                      {outOfAttempts ? "No attempts" : `${attemptsLeft}/${maxAttempts} left`}
+                    </span>
+                  </div>
+                </div>
+
+                {questionLoading ? (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">Loading...</div>
+                    <p className="text-muted-foreground">Loading question...</p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-lg text-foreground mb-4">{question}</p>
+                    <p className="text-sm text-muted-foreground">Hint: {hint}</p>
+                  </>
+                )}
+              </div>
+
+              {!isCompleted && !questionLoading ? (
+                <div className="space-y-4">
+                  <Input
+                    id="answer-input"
+                    value={answer}
+                    onChange={(e) => {
+                      setAnswer(e.target.value);
+                      if (result) setResult("");
+                    }}
+                    placeholder="Enter your answer here..."
+                    className="text-lg"
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && !loading && cooldownSeconds === 0 && attemptsLeft > 0 && submitAnswer()
+                    }
+                    disabled={cooldownSeconds > 0 || attemptsLeft <= 0}
+                  />
+                  <Button
+                    onClick={submitAnswer}
+                    disabled={loading || !answer.trim() || cooldownSeconds > 0 || attemptsLeft <= 0}
+                    className="w-full py-4 text-lg"
+                  >
+                    {loading
+                      ? "Submitting..."
+                      : cooldownSeconds > 0
+                        ? `Wait ${cooldownSeconds}s`
+                        : attemptsLeft <= 0
+                          ? "No attempts left"
+                          : "Submit Answer"}
+                  </Button>
+                </div>
+              ) : isCompleted ? (
+                <div className="text-center py-8">
+                  <div className="text-6xl mb-4">🎉</div>
+                  <h3 className="text-2xl font-bold text-primary mb-2">Challenge Completed!</h3>
+                  <p className="text-muted-foreground mb-6">You've completed Day {displayDay}.</p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    {recommendedDay && recommendedDay !== displayDay ? (
+                      <Button
+                        onClick={handleNextQuestion}
+                        className="bg-green-600 text-white hover:bg-green-700 px-6 py-3"
+                      >
+                        Next Question (Day {recommendedDay})
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => {
+                          setShowProgress(true);
+                          fetchProgress();
+                        }}
+                        className="bg-green-600 text-white hover:bg-green-700 px-6 py-3"
+                      >
+                        View All Progress
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {!hasAvailableQuestions && (
+                    <p className="text-sm text-muted-foreground mt-4">
+                      All available questions completed! Check back when more unlock.
+                    </p>
+                  )}
+                </div>
+              ) : null}
+            </>
+          )}
+
+          {/* Progression Locked Display */}
+          {!isUnlocked && !isCatchUp && !isDateLocked && (
+            <div className="bg-card border rounded-lg p-6">
+              <div className="text-center py-8">
+                <div className="text-6xl mb-4">🔒</div>
+                <h3 className="text-2xl font-bold text-muted-foreground mb-2">Question Locked</h3>
+                <p className="text-muted-foreground mb-4">
+                  {lockReason || `Complete Day ${displayDay - 1} to unlock this question`}
+                </p>
+                
+                <div className="bg-muted/30 border rounded-lg p-4 mb-4">
+                  <p className="text-sm text-muted-foreground">
+                    Complete previous questions in order to unlock this one.
+                  </p>
+                </div>
+                
+                <div className="flex gap-3 justify-center">
+                  {recommendedDay && (
+                    <Button
+                      onClick={() => fetchQuestion(recommendedDay)}
+                      className="bg-primary text-primary-foreground"
+                    >
+                      Go to Day {recommendedDay}
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowProgress(true);
+                      fetchProgress();
+                    }}
+                  >
+                    Show All Days
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
 
           {result && (
             <div
               className={`p-4 rounded-lg border ${
-                result.toLowerCase().includes("success") ||
-                result.toLowerCase().includes("correct")
+                result.toLowerCase().includes("success") || result.toLowerCase().includes("correct")
                   ? "bg-green-50 border-green-200 text-green-800"
-                  : result.toLowerCase().includes("attempt") ||
-                      result.toLowerCase().includes("remaining")
+                  : result.toLowerCase().includes("attempt") || result.toLowerCase().includes("remaining")
                     ? "bg-yellow-50 border-yellow-200 text-yellow-800"
-                    : result.toLowerCase().includes("wait") ||
-                        result.toLowerCase().includes("cooldown")
+                    : result.toLowerCase().includes("wait") || result.toLowerCase().includes("cooldown")
                       ? "bg-amber-50 border-amber-200 text-amber-800"
                       : "bg-red-50 border-red-200 text-red-800"
               }`}

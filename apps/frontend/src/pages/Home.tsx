@@ -10,22 +10,50 @@ import Rules from "../components/Rules";
 import { useNavigate } from "react-router-dom";
 
 export default function WelcomePage() {
-  const navigate = useNavigate();
-  const { user, userProgress } = useAuth();
-  const [currentDay, setCurrentDay] = useState(1);
-  const [completedDays, setCompletedDays] = useState(0);
+	const navigate = useNavigate();
+	const { user, userProgress } = useAuth();
+	const [currentDay, setCurrentDay] = useState(1);
+	const [completedDays, setCompletedDays] = useState(0);
+
+	const fetchProgressFromAPI = async () => {
+		if (!user) return;
+		
+		try {
+			const token = await user.getIdToken();
+			const response = await fetch("http://localhost:5000/progress", {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			
+			if (response.ok) {
+				const data = await response.json();
+				setCompletedDays(data.totalCompleted || 0);
+			}
+		} catch (error) {
+			console.error("Error fetching progress from API:", error);
+		}
+	};
 
   useEffect(() => {
     const day = getCurrentDay();
     setCurrentDay(day);
 
-    if (userProgress?.completed) {
-      const completed = Object.values(userProgress.completed).filter(
-        (day: any) => day.done,
-      ).length;
-      setCompletedDays(completed);
-    }
-  }, [userProgress]);
+		// Try to get progress from API first, fallback to userProgress
+		if (user) {
+			fetchProgressFromAPI();
+		} else if (userProgress?.completed) {
+			const completed = Object.values(userProgress.completed).filter(
+				(day: any) => day.done
+			).length;
+			setCompletedDays(completed);
+		}
+	}, [user, userProgress]);
+
+	const navLinks = [
+		{ href: '/', label: 'Home', active: true },
+		{ href: '/rules', label: 'Rules' },
+		{ href: '/leaderboard', label: 'Leaderboard' },
+		{ href: '/play', label: 'Play' },
+	];
 
   return (
     <div className="relative w-full min-h-screen bg-background">

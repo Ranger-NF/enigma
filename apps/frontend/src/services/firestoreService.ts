@@ -67,7 +67,7 @@ export interface UserProgress {
 
 // Get current day (1-10)
 export const getCurrentDay = (): number => {
-  const startDate = new Date('2025-09-21'); // Adjust this to your start date
+  const startDate = new Date('2025-09-30'); // Adjust this to your start date
   const today = new Date();
   const diffTime = today.getTime() - startDate.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
