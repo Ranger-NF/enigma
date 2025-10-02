@@ -48,12 +48,6 @@ export default function WelcomePage() {
 		}
 	}, [user, userProgress]);
 
-	const navLinks = [
-		{ href: '/', label: 'Home', active: true },
-		{ href: '/rules', label: 'Rules' },
-		{ href: '/leaderboard', label: 'Leaderboard' },
-		{ href: '/play', label: 'Play' },
-	];
 
   return (
     <div className="relative w-full min-h-screen bg-background">

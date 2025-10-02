@@ -121,36 +121,51 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
     const [isMobile, setIsMobile] = useState(false);
     const containerRef = useRef<HTMLElement>(null);
     const location = useLocation();
-    const [activeLink, setActiveLink] = useState(
-      location.pathname + location.hash,
-    );
 
     const navScroll = (
       e: React.MouseEvent<HTMLButtonElement>,
       link: Navbar01NavLink,
     ) => {
+      const btn = e.currentTarget as HTMLButtonElement;
       const [path, hash] = link.href.split("#");
       e.preventDefault();
 
-      if (hash && location.pathname === (path || "/")) {
-        // same page → scroll
-        const el = document.querySelector(`#${hash}`);
-        el?.scrollIntoView({ behavior: "smooth" });
-      } else {
-        // different page → navigate
-        navigate(link.href);
+      // If we're already on the same pathname, do a same-page action:
+      // - if there's a hash, scroll to that element
+      // - otherwise scroll to top of the page
+      if (location.pathname === (path || "/")) {
         if (hash) {
+          // update the URL hash so active-link detection sees the change
+          navigate(`${path}#${hash}`);
           setTimeout(() => {
             const el = document.querySelector(`#${hash}`);
             el?.scrollIntoView({ behavior: "smooth" });
-          }, 200); // tweak delay (50–150ms usually works)
+          }, 80);
+        } else {
+          // navigate to the path (clears any hash) then scroll to top
+          navigate(path || "/");
+          setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 80);
         }
+        // remove focus so the button doesn't appear 'pressed'
+        btn.blur();
+        return;
+      }
+
+      // Different page → navigate, then scroll to hash after a short delay
+      navigate(link.href);
+      // remove focus so the button doesn't appear 'pressed'
+      btn.blur();
+      if (hash) {
+        setTimeout(() => {
+          const el = document.querySelector(`#${hash}`);
+          el?.scrollIntoView({ behavior: "smooth" });
+        }, 200); // tweak delay (50–150ms usually works)
       }
     };
 
-    useEffect(() => {
-      setActiveLink(location.pathname + location.hash);
-    }, [location]);
+    // We derive active state from the current pathname so links with hashes
+    // (e.g. "/#rules") correctly match the route's pathname ("/") and don't
+    // leave another link stuck as active.
 
     useEffect(() => {
       const checkWidth = () => {
@@ -239,9 +254,23 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
                             onClick={(e) => navScroll(e, link)}
                             className={cn(
                               "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer no-underline",
-                              activeLink === link.href
-                                ? "bg-accent text-accent-foreground"
-                                : "text-foreground/80 hover:text-foreground",
+                              // compute active state by comparing the route path portion
+                              // of the link (before any hash) with the current pathname
+                              (() => {
+                                const [linkPath, linkHash] = link.href.split('#');
+                                const normalizedLinkPath = linkPath || '/';
+                                const currentHash = location.hash || '';
+                                // If link specifies a hash, consider it active only when hash matches
+                                if (linkHash) {
+                                  return (location.pathname === normalizedLinkPath && currentHash === `#${linkHash}`)
+                                    ? "bg-accent text-accent-foreground"
+                                    : "text-foreground/80 hover:text-foreground";
+                                }
+                                // No-hash link: active when pathname matches and there's no hash on the location
+                                return (location.pathname === normalizedLinkPath && currentHash === '')
+                                  ? "bg-accent text-accent-foreground"
+                                  : "text-foreground/80 hover:text-foreground";
+                              })(),
                             )}
                           >
                             {link.label}
@@ -274,9 +303,19 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
                           onClick={(e) => navScroll(e, link)}
                           className={cn(
                             "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer no-underline",
-                            activeLink === link.href
-                              ? "bg-accent text-accent-foreground"
-                              : "text-foreground/80 hover:text-foreground",
+                            (() => {
+                              const [linkPath, linkHash] = link.href.split('#');
+                              const normalizedLinkPath = linkPath || '/';
+                              const currentHash = location.hash || '';
+                              if (linkHash) {
+                                return (location.pathname === normalizedLinkPath && currentHash === `#${linkHash}`)
+                                  ? "bg-accent text-accent-foreground"
+                                  : "text-foreground/80 hover:text-foreground";
+                              }
+                              return (location.pathname === normalizedLinkPath && currentHash === '')
+                                ? "bg-accent text-accent-foreground"
+                                : "text-foreground/80 hover:text-foreground";
+                            })(),
                           )}
                         >
                           {link.label}

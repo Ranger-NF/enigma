@@ -1,7 +1,7 @@
 import { Navbar01 } from "@/components/ui/shadcn-io/navbar-01";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getCurrentDay, isDayCompleted } from "../services/firestoreService";
+import { getCurrentDay } from "../services/firestoreService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -42,8 +42,8 @@ interface ProgressResponse {
 }
 
 function PlayPage() {
-  const { user, userProgress, refreshUserProgress } = useAuth();
-  const [currentDay, setCurrentDay] = useState(1);
+  const { user, refreshUserProgress } = useAuth();
+  const [, setCurrentDay] = useState(1);
   const [question, setQuestion] = useState("");
   const [hint, setHint] = useState("");
   const [answer, setAnswer] = useState("");
@@ -53,9 +53,8 @@ function PlayPage() {
   const [difficulty, setDifficulty] = useState(1);
   const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
   const [attemptsLeft, setAttemptsLeft] = useState<number>(0);
-  const [maxAttempts, setMaxAttempts] = useState(10);
-  const [isCooldown, setIsCooldown] = useState(false);
-  const [cooldownMsg, setCooldownMsg] = useState("");
+  const [maxAttempts] = useState(10);
+  const [, setCooldownMsg] = useState("");
 
   // New state for enhanced navigation and unlock date handling
   const [displayDay, setDisplayDay] = useState(1);
@@ -298,12 +297,6 @@ function PlayPage() {
     }
   };
 
-  const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/rules", label: "Rules" },
-    { href: "/leaderboard", label: "Leaderboard" },
-    { href: "/play", label: "Play", active: true },
-  ];
 
   const outOfAttempts = attemptsLeft <= 0;
   const calendarDay = getCurrentDay();
