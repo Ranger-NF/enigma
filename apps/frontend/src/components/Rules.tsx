@@ -17,7 +17,7 @@ export default function Rules() {
   ];
 
   return (
-    <div className="w-full pt-[100px]">
+    <div className="w-full pt-[100px] overflow-x-hidden">
       <img className="absolute left-0 h-[600px]" src={glassImage1} />
       <img className="absolute right-0 h-[600px]" src={glassImage2} />
       <div className="flex h-full w-full items-center justify-center">
