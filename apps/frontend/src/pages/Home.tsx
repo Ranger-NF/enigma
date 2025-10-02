@@ -48,24 +48,19 @@ export default function WelcomePage() {
 		}
 	}, [user, userProgress]);
 
-	const navLinks = [
-		{ href: '/', label: 'Home', active: true },
-		{ href: '/rules', label: 'Rules' },
-		{ href: '/leaderboard', label: 'Leaderboard' },
-		{ href: '/play', label: 'Play' },
-	];
 
   return (
-    <div className="relative w-full min-h-screen bg-background">
+    <div className="relative w-full min-h-screen bg-background overflow-x-hidden">
       <Navbar01 />
 
       <div className="container mx-auto py-12">
         {/* Hero Section */}
-        <section className=" relative md:h-screen">
+        <section className="relative md:h-screen overflow-hidden">
           <img
             src={backgroundPng}
             alt="Background"
-            className="absolute md:bottom-[20%] md:left-[25%] md:h-[600px] z-[-0.2] opacity-60"
+            aria-hidden
+            className="absolute left-1/2 -translate-x-1/2 md:bottom-[20%] md:h-[600px] h-[300px] z-[-0.2] opacity-60 pointer-events-none"
           />
           <div className="relative md:px-0 px-[20px] top-[19%] z-10 text-center mb-16">
             <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
@@ -115,7 +110,8 @@ export default function WelcomePage() {
           <img
             src={potactorImage}
             alt="Background"
-            className="absolute right-[0] h-[800px]"
+            aria-hidden
+            className="absolute md:right-0 right-1/2 -translate-x-1/2 md:h-[800px] h-[300px] opacity-60 pointer-events-none"
           />
           {/* Progress Section */}
           {user && (

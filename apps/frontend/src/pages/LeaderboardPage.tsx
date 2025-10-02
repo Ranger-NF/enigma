@@ -161,7 +161,7 @@ export default function LeaderboardPage() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {leaderboard.map((entry, index) => (
+              {leaderboard.map((entry) => (
                 <div
                   key={entry.id}
                   className={`px-6 py-4 flex items-center justify-between ${
