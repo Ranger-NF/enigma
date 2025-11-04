@@ -1,7 +1,6 @@
-import { Navbar01 } from "@/components/ui/shadcn-io/navbar-01";
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
-import { getCurrentDay, getTodaysLeaderboard, getDailyLeaderboard } from "../services/firestoreService";
+import { useAuth } from "../contexts/AuthContext";
+import { getCurrentDay, getDailyLeaderboard } from "../services/firestoreService";
 import { Button } from "@/components/ui/button";
 
 interface LeaderboardEntry {
@@ -13,19 +12,13 @@ interface LeaderboardEntry {
 }
 
 export default function LeaderboardPage() {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [currentDay, setCurrentDay] = useState(1);
   const [selectedDay, setSelectedDay] = useState(1);
   const [loading, setLoading] = useState(true);
   const [userRank, setUserRank] = useState<number | null>(null);
 
-  const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/rules', label: 'Rules' },
-    { href: '/leaderboard', label: 'Leaderboard', active: true },
-    { href: '/play', label: 'Play' },
-  ];
 
   useEffect(() => {
     const day = getCurrentDay();
@@ -41,8 +34,8 @@ export default function LeaderboardPage() {
       setLeaderboard(data);
       
       // Find user's rank
-      if (user) {
-        const userEntry = data.find(entry => entry.id === user.uid);
+      if (currentUser) {
+        const userEntry = data.find(entry => entry.id === currentUser.uid);
         setUserRank(userEntry ? userEntry.rank : null);
       }
     } catch (error) {
@@ -76,8 +69,6 @@ export default function LeaderboardPage() {
 
   return (
     <div className="relative w-full min-h-screen bg-background">
-      <Navbar01 navigationLinks={navLinks} />
-      
       <div className="container mx-auto px-4 md:px-6 py-8">
         {/* Header */}
         <div className="text-center mb-8">
@@ -116,7 +107,7 @@ export default function LeaderboardPage() {
         </div>
 
         {/* User's Rank (if applicable) */}
-        {user && userRank && (
+        {currentUser && userRank && (
           <div className="bg-primary/10 border border-primary/20 text-primary px-6 py-4 rounded-lg mb-6">
             <div className="flex items-center justify-between">
               <div>
@@ -161,7 +152,7 @@ export default function LeaderboardPage() {
                 <div
                   key={entry.id}
                   className={`px-6 py-4 flex items-center justify-between ${
-                    user && entry.id === user.uid ? 'bg-primary/5' : ''
+                    currentUser && entry.id === currentUser.uid ? 'bg-primary/5' : ''
                   }`}
                 >
                   <div className="flex items-center space-x-4">
@@ -171,7 +162,7 @@ export default function LeaderboardPage() {
                     <div>
                       <h3 className="text-lg font-semibold text-foreground">
                         {entry.name || 'Anonymous'}
-                        {user && entry.id === user.uid && ' (You)'}
+                        {currentUser && entry.id === currentUser.uid && ' (You)'}
                       </h3>
                       <p className="text-sm text-muted-foreground">{entry.email}</p>
                     </div>

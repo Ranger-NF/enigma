@@ -1,5 +1,5 @@
 import { Navbar01 } from '@/components/ui/shadcn-io/navbar-01';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { getCurrentDay } from '../services/firestoreService';
 import { useState, useEffect } from 'react';
@@ -8,184 +8,229 @@ import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useNavigate } from 'react-router-dom';
 
 export default function WelcomePage() {
-	const navigate = useNavigate();
-	const { user, userProgress } = useAuth();
-	const [currentDay, setCurrentDay] = useState(1);
-	const [completedDays, setCompletedDays] = useState(0);
-	const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { currentUser, userProgress } = useAuth();
+  const [currentDay, setCurrentDay] = useState(1);
+  const [completedDays, setCompletedDays] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
-	useEffect(() => {
-		const day = getCurrentDay();
-		setCurrentDay(day);
-		
-		if (userProgress?.completed) {
-			const completed = Object.values(userProgress.completed).filter((day: any) => day.done).length;
-			setCompletedDays(completed);
-		}
-	}, [userProgress]);
+  useEffect(() => {
+    const day = getCurrentDay();
+    setCurrentDay(day);
+    
+    if (userProgress?.completed) {
+      const completed = Object.values(userProgress.completed).filter((day: any) => day.done).length;
+      setCompletedDays(completed);
+    }
+  }, [userProgress]);
 
-	const navLinks = [
-		{ href: '/', label: 'Home', active: true },
-		{ href: '/rules', label: 'Rules' },
-		{ href: '/leaderboard', label: 'Leaderboard' },
-		{ href: '/play', label: 'Play' },
-	];
+  const navLinks = [
+    { href: '/', label: 'Home', active: true },
+    { href: '/rules', label: 'Rules' },
+    { href: '/leaderboard', label: 'Leaderboard' },
+    { href: '/play', label: 'Play' },
+  ];
 
-	const handlePlayClick = () => {
-		setIsLoading(true);
-		// Add a small delay for the transition
-		setTimeout(() => {
-			navigate('/play');
-		}, 800);
-	};
+  const handlePlayClick = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      navigate('/play');
+    }, 800);
+  };
 
-	return (
-		<div className="relative w-full min-h-screen bg-background">
-			<LoadingScreen isLoading={isLoading} />
-			<Navbar01 navigationLinks={navLinks} />
-			
-			<div className="container mx-auto px-4 md:px-6 py-12">
-				{/* Hero Section */}
-				<div className="text-center mb-16">
-					<h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-						Treasure Hunt
-					</h1>
-					<p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-						Join our 10-day treasure hunt! One question per day, compete for the fastest completion time, 
-						and climb the daily leaderboard.
-					</p>
+  return (
+    <div className="relative w-full min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900">
+      <LoadingScreen isLoading={isLoading} />
+      <Navbar01 navigationLinks={navLinks} />
+      
+      {/* Background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50"></div>
+      </div>
+      
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 md:pt-32 md:pb-24">
+        <div className="text-center">
+          <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6">
+            Treasure Hunt
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
+            Join our 10-day treasure hunt! One question per day, compete for the fastest completion time, 
+            and climb the daily leaderboard.
+          </p>
 					
-					{user ? (
-						<div className="flex flex-col sm:flex-row gap-4 justify-center">
-							<Button 
-								onClick={handlePlayClick}
-								className="px-8 py-4 text-lg transition-transform duration-200 hover:scale-105 active:scale-95"
-							>
-								Start Today's Challenge
-							</Button>
-							<Button 
-								onClick={() => {
-									setIsLoading(true);
-									setTimeout(() => {
-										navigate('/leaderboard');
-									}, 800);
-								}} 
-								variant="outline"
-								className="px-8 py-4 text-lg"
-							>
-								View Leaderboard
-							</Button>
-						</div>
-					) : (
-						<div className="flex flex-col sm:flex-row gap-4 justify-center">
-							<Button 
-								onClick={() => window.location.href = '/signin'} 
-								className="px-8 py-4 text-lg"
-							>
-								Sign In to Play
-							</Button>
-							<Button 
-								onClick={() => window.location.href = '/rules'} 
-								variant="outline"
-								className="px-8 py-4 text-lg"
-							>
-								Read Rules
-							</Button>
-						</div>
-					)}
-				</div>
+					{currentUser ? (
+            <div className="flex flex-col sm:flex-row gap-6 justify-center mt-12">
+              <Button 
+                onClick={handlePlayClick}
+                className="px-8 py-4 text-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105"
+              >
+                Start Today's Challenge
+              </Button>
+              <Button 
+                onClick={() => {
+                  setIsLoading(true);
+                  setTimeout(() => {
+                    navigate('/leaderboard');
+                  }, 800);
+                }} 
+                variant="outline"
+                className="px-8 py-4 text-lg bg-transparent border-2 border-white text-white hover:bg-white/10 hover:border-transparent font-semibold rounded-lg transition-all duration-300"
+              >
+                View Leaderboard
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-6 justify-center mt-12">
+              <Button 
+                onClick={() => navigate('/signin')} 
+                className="px-8 py-4 text-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105"
+              >
+                Sign In to Play
+              </Button>
+              <Button 
+                onClick={() => navigate('/rules')} 
+                variant="outline"
+                className="px-8 py-4 text-lg bg-transparent border-2 border-white text-white hover:bg-white/10 hover:border-transparent font-semibold rounded-lg transition-all duration-300"
+              >
+                Read Rules
+              </Button>
+            </div>
+          )}
+        </div>
 
-				{/* Progress Section */}
-				{user && (
-					<div className="bg-card border rounded-lg p-8 mb-12">
-						<h2 className="text-2xl font-bold text-foreground mb-6 text-center">Your Progress</h2>
-						
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-							<div className="text-center">
-								<div className="text-3xl font-bold text-primary">{completedDays}</div>
-								<div className="text-muted-foreground">Days Completed</div>
-							</div>
-							<div className="text-center">
-								<div className="text-3xl font-bold text-primary">Day {currentDay}</div>
-								<div className="text-muted-foreground">Current Day</div>
-							</div>
-							<div className="text-center">
-								<div className="text-3xl font-bold text-primary">{10 - completedDays}</div>
-								<div className="text-muted-foreground">Days Remaining</div>
-							</div>
-						</div>
+        {/* Features Section */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white/5 backdrop-blur-md rounded-xl p-8 text-center transform transition-all duration-300 hover:scale-105">
+              <div className="text-4xl mb-4">📅</div>
+              <h3 className="text-xl font-bold text-white mb-3">Daily Challenges</h3>
+              <p className="text-gray-300">
+                One question unlocks each day. Solve it and climb the leaderboard!
+              </p>
+            </div>
+            
+            <div className="bg-white/5 backdrop-blur-md rounded-xl p-8 text-center transform transition-all duration-300 hover:scale-105">
+              <div className="text-4xl mb-4">🏆</div>
+              <h3 className="text-xl font-bold text-white mb-3">Compete & Win</h3>
+              <p className="text-gray-300">
+                Test your skills against others and see where you stand.
+              </p>
+            </div>
+            
+            <div className="bg-white/5 backdrop-blur-md rounded-xl p-8 text-center transform transition-all duration-300 hover:scale-105">
+              <div className="text-4xl mb-4">🚀</div>
+              <h3 className="text-xl font-bold text-white mb-3">Track Progress</h3>
+              <p className="text-gray-300">
+                Monitor your performance and improve with each challenge.
+              </p>
+            </div>
+          </div>
+        </div>
 
-						{/* Progress Bar */}
-						<div className="w-full bg-muted rounded-full h-3 mb-4">
-							<div 
-								className="bg-primary h-3 rounded-full transition-all duration-500"
-								style={{ width: `${(completedDays / 10) * 100}%` }}
-							></div>
-						</div>
-						<p className="text-center text-muted-foreground">
-							{completedDays}/10 challenges completed ({Math.round((completedDays / 10) * 100)}%)
-						</p>
-					</div>
-				)}
+        {/* Progress Section */}
+        {currentUser && (
+          <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-8">
+              <h2 className="text-3xl font-bold text-white mb-8 text-center">Your Progress</h2>
+            
+              <div className="grid grid-cols-3 gap-6 mb-8">
+                <div className="text-center">
+                  <div className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">{completedDays}</div>
+                  <div className="text-gray-300">Days Completed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Day {currentDay}</div>
+                  <div className="text-gray-300">Current Day</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">{10 - completedDays}</div>
+                  <div className="text-gray-300">Days Remaining</div>
+                </div>
+              </div>
 
-				{/* Features Grid */}
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-					<div className="bg-card border rounded-lg p-6 text-center">
-						<div className="text-4xl mb-4">📅</div>
-						<h3 className="text-xl font-bold text-foreground mb-2">Daily Challenges</h3>
-						<p className="text-muted-foreground">
-							One new question unlocks each day for 10 days. Complete them as fast as possible!
-						</p>
-					</div>
-					
-					<div className="bg-card border rounded-lg p-6 text-center">
-						<div className="text-4xl mb-4">🏆</div>
-						<h3 className="text-xl font-bold text-foreground mb-2">Live Leaderboard</h3>
-						<p className="text-muted-foreground">
-							Compete with others! The leaderboard resets daily based on completion speed.
-						</p>
-					</div>
-					
-					<div className="bg-card border rounded-lg p-6 text-center">
-						<div className="text-4xl mb-4">📈</div>
-						<h3 className="text-xl font-bold text-foreground mb-2">Track Progress</h3>
-						<p className="text-muted-foreground">
-							Monitor your daily progress and see how you rank against other participants.
-						</p>
-					</div>
-				</div>
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-700 rounded-full h-3 mb-4 overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-1000 ease-out"
+                  style={{ width: `${(completedDays / 10) * 100}%` }}
+                ></div>
+              </div>
+              <p className="text-center text-gray-300 text-lg font-medium">
+                {completedDays}/10 challenges completed ({Math.round((completedDays / 10) * 100)}%)
+              </p>
+            </div>
+          </div>
+        )}
 
-				{/* How It Works */}
-				<div className="bg-card border rounded-lg p-8">
-					<h2 className="text-2xl font-bold text-foreground mb-6 text-center">How It Works</h2>
-					
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-						<div className="text-center">
-							<div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">1</div>
-							<h3 className="font-semibold text-foreground mb-2">Sign In</h3>
-							<p className="text-sm text-muted-foreground">Create an account or sign in with Google</p>
-						</div>
-						
-						<div className="text-center">
-							<div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">2</div>
-							<h3 className="font-semibold text-foreground mb-2">Daily Question</h3>
-							<p className="text-sm text-muted-foreground">Answer today's challenge as quickly as possible</p>
-						</div>
-						
-						<div className="text-center">
-							<div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">3</div>
-							<h3 className="font-semibold text-foreground mb-2">Compete</h3>
-							<p className="text-sm text-muted-foreground">See your ranking on the daily leaderboard</p>
-						</div>
-						
-						<div className="text-center">
-							<div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xl mx-auto mb-4">4</div>
-							<h3 className="font-semibold text-foreground mb-2">Repeat</h3>
-							<p className="text-sm text-muted-foreground">Come back tomorrow for the next challenge!</p>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
+        {/* How It Works */}
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-white mb-16">How It Works</h2>
+        
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              {
+                number: '1',
+                title: 'Sign In',
+                description: 'Create an account or sign in with Google',
+                icon: '🔐'
+              },
+              {
+                number: '2',
+                title: 'Daily Question',
+                description: 'Answer today\'s challenge quickly',
+                icon: '❓'
+              },
+              {
+                number: '3',
+                title: 'Compete',
+                description: 'Climb the leaderboard',
+                icon: '🏆'
+              },
+              {
+                number: '4',
+                title: 'Repeat',
+                description: 'New challenge every day!',
+                icon: '🔄'
+              }
+            ].map((step, index) => (
+              <div 
+                key={index}
+                className="bg-white/5 backdrop-blur-md rounded-xl p-6 text-center transform transition-all duration-300 hover:scale-105"
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
+                  {step.icon}
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
+                <p className="text-gray-300">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA Section */}
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Ready to Start Your Journey?</h2>
+          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+            Join thousands of players in the ultimate treasure hunt experience. Sign up now and start solving!
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              onClick={() => navigate(currentUser ? '/play' : '/signin')} 
+              className="px-8 py-4 text-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105"
+            >
+              {currentUser ? 'Continue Playing' : 'Get Started'}
+            </Button>
+            <Button 
+              onClick={() => navigate('/leaderboard')} 
+              variant="outline"
+              className="px-8 py-4 text-lg bg-transparent border-2 border-white text-white hover:bg-white/10 hover:border-transparent font-semibold rounded-lg transition-all duration-300"
+            >
+              View Leaderboard
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

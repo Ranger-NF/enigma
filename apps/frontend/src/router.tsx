@@ -1,45 +1,62 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { useEffect, type JSX } from "react";
-import { useLoading } from "./context/LoadingContext";
-import WelcomePage from "./pages/Home";
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import HomePage from "./pages/HomePage";
 import SignInPage from "./pages/SignInPage";
 import PlayPage from "./pages/PlayPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import Rules from "./pages/Rules";
+import AboutUs from "@/pages/AboutUs";
 import ProtectedRoute from "./components/ProtectedRoute";
+import LandingLayout from "./components/LandingLayout";
+import { LoadingWrapper } from './components/LoadingWrapper';
 
-function RouteWithLoading({ element }: { element: JSX.Element }) {
-	const { setIsLoading } = useLoading();
-	const location = useLocation();
+function AppRouter() {
+  const router = createBrowserRouter([
+    {
+      path: '/',
+      element: (
+        <LoadingWrapper>
+          <LandingLayout />
+        </LoadingWrapper>
+      ),
+      children: [
+        { 
+          index: true, 
+          element: <HomePage />
+        },
+        { 
+          path: '/rules', 
+          element: <Rules />,
+          handle: { noScroll: true }
+        },
+        { 
+          path: '/about-us', 
+          element: <AboutUs />
+        },
+        { 
+          path: '/signin', 
+          element: <SignInPage />
+        },
+        {
+          path: '/play',
+          element: (
+            <ProtectedRoute>
+              <PlayPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: '/leaderboard',
+          element: (
+            <ProtectedRoute>
+              <LeaderboardPage />
+            </ProtectedRoute>
+          ),
+        },
+      ],
+    },
+  ]);
 
-	useEffect(() => {
-		setIsLoading(true);
-		const timer = setTimeout(() => setIsLoading(false), 800);
-		return () => clearTimeout(timer);
-	}, [location.pathname, setIsLoading]);
-
-	return element;
+  return <RouterProvider router={router} />;
 }
 
-export default function AppRouter() {
-	return (
-		<BrowserRouter>
-			<Routes>
-				<Route path="/" element={<RouteWithLoading element={<WelcomePage />} />} />
-				<Route path="/signin" element={<SignInPage />} />
-				<Route element={<ProtectedRoute />}>
-					<Route path="/play" element={<RouteWithLoading element={<PlayPage />} />} />
-				</Route>
-
-				<Route element={<ProtectedRoute />}>
-					<Route
-						path="/leaderboard"
-						element={<RouteWithLoading element={<LeaderboardPage />} />}
-					/>
-				</Route>
-
-				<Route path="/rules" element={<Rules />} />
-			</Routes>
-		</BrowserRouter>
-	);
-}
+export default AppRouter;

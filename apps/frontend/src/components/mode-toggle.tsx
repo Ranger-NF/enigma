@@ -9,10 +9,15 @@ import {
 } from "./ui/dropdown-menu"
 import { useTheme } from "./theme-provider"
 
-export function ModeToggle() {
+interface ModeToggleProps extends React.HTMLAttributes<HTMLDivElement> {
+  // Additional props can be added here if needed
+}
+
+export function ModeToggle({ className, ...props }: ModeToggleProps) {
 	const { setTheme } = useTheme()
 
 	return (
+		<div className={className} {...props}>
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button variant="outline" size="icon">
@@ -33,5 +38,6 @@ export function ModeToggle() {
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
+		</div>
 	)
 }

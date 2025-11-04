@@ -1,8 +1,11 @@
 // This script helps set up the 10-day treasure hunt questions in Firestore
 // Run this in the browser console or as a Node.js script
 
-import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { app } from '../lib/firebase';
+import { getFirestore } from 'firebase/firestore';
+
+const db = getFirestore(app);
 
 export interface QuestionData {
   day: number;

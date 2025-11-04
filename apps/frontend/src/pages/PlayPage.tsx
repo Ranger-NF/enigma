@@ -1,12 +1,11 @@
-import { Navbar01 } from "@/components/ui/shadcn-io/navbar-01";
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../contexts/AuthContext";
 import { getCurrentDay, isDayCompleted } from "../services/firestoreService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 function PlayPage() {
-  const { user, userProgress, refreshUserProgress } = useAuth();
+  const { currentUser: user } = useAuth();
   const [currentDay, setCurrentDay] = useState(1);
   const [question, setQuestion] = useState("");
   const [hint, setHint] = useState("");
@@ -113,7 +112,8 @@ function PlayPage() {
       
       if (data.correct) {
         setIsCompleted(true);
-        await refreshUserProgress();
+        // Refresh the page to show updated state
+        window.location.reload();
       } else {
         if (typeof data.attemptsLeft === 'number') setAttemptsLeft(data.attemptsLeft);
         if (typeof data.cooldownSeconds === 'number') setCooldownSeconds(data.cooldownSeconds || 0);
@@ -126,17 +126,9 @@ function PlayPage() {
     }
   };
 
-  const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/rules', label: 'Rules' },
-    { href: '/leaderboard', label: 'Leaderboard' },
-    { href: '/play', label: 'Play', active: true },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar01 navigationLinks={navLinks} />
-      
       <div className="container mx-auto px-4 md:px-6 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="bg-card border rounded-lg p-6">

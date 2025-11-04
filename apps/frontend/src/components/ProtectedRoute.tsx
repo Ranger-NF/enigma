@@ -1,14 +1,25 @@
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import type { ReactNode } from 'react';
 
-const ProtectedRoute = () => {
-	const { user, loading } = useAuth();
+interface ProtectedRouteProps {
+  children: ReactNode;
+}
 
-	if (loading) {
-		return <div>Loading...</div>;
-	}
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const { currentUser, loading } = useAuth();
+  const location = useLocation();
 
-	return user ? <Outlet /> : <Navigate to="/signin" />;
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!currentUser) {
+    // Redirect them to the /signin page, but save the current location they were trying to go to
+    return <Navigate to="/signin" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;
