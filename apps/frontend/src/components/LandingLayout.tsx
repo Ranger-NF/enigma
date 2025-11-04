@@ -5,11 +5,15 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { LogOut } from 'lucide-react';
 
-const LandingLayout = () => {
+interface LandingLayoutProps {
+  children?: React.ReactNode;
+  isSignInPage?: boolean;
+}
+
+const LandingLayout = ({ children, isSignInPage = false }: LandingLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { currentUser, signOut } = useAuth();
-  const isSignInPage = location.pathname === '/signin';
 
   const handleLogout = async () => {
     try {
@@ -52,9 +56,9 @@ const LandingLayout = () => {
       
       {/* Navbar */}
       <header className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-4",
-        isSignInPage ? "bg-transparent" : "bg-black/30 backdrop-blur-md"
-      )}>
+        "fixed top-0 left-0 right-0 z-50 py-4",
+        isSignInPage ? "bg-transparent" : "bg-transparent"
+      )} style={{ backgroundColor: 'transparent' }}>
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between">
             {/* Logo on the left */}
@@ -96,9 +100,9 @@ const LandingLayout = () => {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center space-x-2 focus:outline-none">
-                      <Avatar className="h-8 w-8">
+                      <Avatar className="h-10 w-10 border-2 border-white/20">
                         <AvatarImage src={currentUser.photoURL || ''} alt={currentUser.displayName || 'User'} />
-                        <AvatarFallback>
+                        <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
                           {currentUser.displayName ? 
                             currentUser.displayName.charAt(0).toUpperCase() : 
                             currentUser.email?.charAt(0).toUpperCase() || 'U'}
@@ -106,16 +110,16 @@ const LandingLayout = () => {
                       </Avatar>
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuContent align="end" className="w-48 bg-gray-900 border border-gray-800">
                     <DropdownMenuItem
                       onClick={() => navigate('/profile')}
-                      className="cursor-pointer"
+                      className="cursor-pointer text-gray-200 hover:bg-gray-800 focus:bg-gray-800"
                     >
                       Profile
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={handleLogout}
-                      className="cursor-pointer text-red-500 focus:text-red-600"
+                      className="cursor-pointer text-red-400 hover:bg-gray-800 focus:bg-gray-800"
                     >
                       <LogOut className="mr-2 h-4 w-4" />
                       Logout
@@ -125,9 +129,9 @@ const LandingLayout = () => {
               ) : !isSignInPage ? (
                 <Link 
                   to="/signin" 
-                  className="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded-full hover:opacity-90 transition-opacity"
+                  className="px-6 py-2 text-sm font-medium text-gray-900 bg-white hover:bg-gray-100 transition-all border border-gray-300 rounded-full font-semibold tracking-wide shadow-sm"
                 >
-                  Sign In
+                  SIGN UP
                 </Link>
               ) : null}
             </div>
@@ -149,7 +153,7 @@ const LandingLayout = () => {
         "relative z-10 min-h-screen flex flex-col pt-24",
         isSignInPage ? "bg-gradient-to-br from-gray-900 to-black" : ""
       )}>
-        <Outlet />
+        {children || <Outlet />}
       </main>
     </div>
   );

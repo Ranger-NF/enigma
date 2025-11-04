@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import LandingLayout from '@/components/LandingLayout';
 
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -34,8 +35,9 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="w-full max-w-md p-8 rounded-2xl bg-gradient-to-br from-gray-900 to-black border border-white/10 shadow-2xl">
+    <LandingLayout>
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="w-full max-w-md p-8 rounded-2xl bg-gradient-to-br from-gray-900 to-black border border-white/10 shadow-2xl">
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-white mb-2 font-orbitron">Welcome Back</h1>
           <p className="text-gray-400">Sign in to continue to ENIGMA</p>
@@ -151,5 +153,6 @@ export default function SignInPage() {
         </p>
       </div>
     </div>
-  );
+  </LandingLayout>
+);
 }

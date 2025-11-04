@@ -22,6 +22,7 @@ export default {
         sans: ['var(--font-sans)', ...fontFamily.sans],
         orbitron: ['var(--font-orbitron)', 'sans-serif'],
         montserrat: ['var(--font-montserrat)', 'sans-serif'],
+        pavelt: ['var(--font-pavelt)', 'sans-serif'],
       },
       colors: {
         border: 'hsl(var(--border))',
