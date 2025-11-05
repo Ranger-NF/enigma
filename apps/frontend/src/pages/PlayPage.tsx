@@ -117,8 +117,26 @@ function PlayPage() {
     }
   }, [cooldownSeconds, attemptsInPeriod, user, displayDay]);
 
-  const fetchProgress = async (): Promise<ProgressResponse | null> => {
+  const fetchProgress = async (forceRefresh: boolean = false): Promise<ProgressResponse | null> => {
     if (!user) return null;
+
+    // Check session storage cache first (unless force refresh is requested)
+    if (!forceRefresh) {
+      const cachedProgress = sessionStorage.getItem('userProgress');
+      const cachedTimestamp = sessionStorage.getItem('userProgressTimestamp');
+
+      if (cachedProgress && cachedTimestamp) {
+        const cacheAge = Date.now() - parseInt(cachedTimestamp);
+        const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
+
+        // Use cache if less than 2 minutes old
+        if (cacheAge < CACHE_DURATION) {
+          const data = JSON.parse(cachedProgress) as ProgressResponse;
+          setUserProgressData(data);
+          return data;
+        }
+      }
+    }
 
     try {
       const token = await user.getIdToken();
@@ -131,6 +149,10 @@ function PlayPage() {
       const data: ProgressResponse = await response.json();
 
       if (response.ok) {
+        // Cache the progress data in session storage
+        sessionStorage.setItem('userProgress', JSON.stringify(data));
+        sessionStorage.setItem('userProgressTimestamp', Date.now().toString());
+
         setUserProgressData(data);
         return data;
       } else {

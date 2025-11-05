@@ -1,5 +1,5 @@
-import glassImage1 from "@/assets/rules-1-photo.svg";
-import glassImage2 from "@/assets/rules-2-photo.svg";
+import glassImage1 from "@/assets/rules-1-photo.webp";
+import glassImage2 from "@/assets/rules-2-photo.webp";
 
 export default function Rules() {
   const rulesAndRegulations: string[] = [
