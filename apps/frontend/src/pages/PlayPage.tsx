@@ -1,5 +1,5 @@
 import { Navbar01 } from "@/components/ui/shadcn-io/navbar-01";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getCurrentDay } from "../services/firestoreService";
 import { Button } from "@/components/ui/button";
@@ -78,8 +78,14 @@ function PlayPage() {
   }, [cooldownSeconds]);
 
   // Auto-refresh when cooldown expires
+  // Use a ref to track if we've already refreshed to prevent duplicate calls
+  const hasRefreshedRef = useRef(false);
+
   useEffect(() => {
-    if (cooldownSeconds === 0 && attemptsInPeriod >= 10) {
+    // Only refresh when cooldown hits exactly 0 (not on every countdown tick)
+    if (cooldownSeconds === 0 && attemptsInPeriod >= 10 && !hasRefreshedRef.current) {
+      hasRefreshedRef.current = true;
+
       // Cooldown just expired, fetch fresh data from server
       const refreshData = async () => {
         if (!user) return;
@@ -103,6 +109,11 @@ function PlayPage() {
       };
 
       refreshData();
+    }
+
+    // Reset the ref when cooldown starts again
+    if (cooldownSeconds > 0) {
+      hasRefreshedRef.current = false;
     }
   }, [cooldownSeconds, attemptsInPeriod, user, displayDay]);
 
@@ -133,15 +144,25 @@ function PlayPage() {
   };
 
   const findNextAvailableQuestion = (progressData: ProgressResponse): number => {
-    const nextIncomplete = progressData.progress.find(day => 
-      !day.isCompleted && day.isAccessible
+    // First, try to find an incomplete and accessible day (unlocked by serial progression)
+    const nextIncomplete = progressData.progress.find(day =>
+      !day.isCompleted && day.isAccessible && day.isDateUnlocked
     );
-    
+
     if (nextIncomplete) {
       return nextIncomplete.day;
     }
-    
-    return progressData.currentDay;
+
+    // If no accessible days, find the first incomplete day
+    // This ensures new users start at Day 1, not Day 10
+    const firstIncomplete = progressData.progress.find(day => !day.isCompleted);
+
+    if (firstIncomplete) {
+      return firstIncomplete.day;
+    }
+
+    // If everything is completed, return Day 1 (to show completion state)
+    return 1;
   };
 
   const fetchQuestion = async (day?: number) => {
@@ -217,13 +238,21 @@ function PlayPage() {
   const initializePage = async () => {
     if (!user) return;
 
-    const progressData = await fetchProgress();
-    if (!progressData) return;
+    // OPTIMIZATION: Fetch both in parallel instead of sequentially
+    const [progressData] = await Promise.all([
+      fetchProgress(),
+      fetchQuestion() // Fetch current day question immediately
+    ]);
 
-    const nextDay = findNextAvailableQuestion(progressData);
-    setRecommendedDay(nextDay);
+    if (progressData) {
+      const nextDay = findNextAvailableQuestion(progressData);
+      setRecommendedDay(nextDay);
 
-    await fetchQuestion(nextDay);
+      // Only fetch again if nextDay is different from current day
+      if (nextDay !== displayDay) {
+        await fetchQuestion(nextDay);
+      }
+    }
   };
 
   useEffect(() => {
