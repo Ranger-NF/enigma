@@ -11,4 +11,10 @@ export default defineConfig({
 			"@": path.resolve(__dirname, "./src"),
 		},
 	},
+	server: {
+		headers: {
+			// During development, disable COOP to allow Firebase Auth popups
+			'Cross-Origin-Opener-Policy': 'unsafe-none',
+		},
+	},
 })
