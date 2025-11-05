@@ -1,14 +1,22 @@
-import express from 'express';
-import cors from 'cors';
-import admin from 'firebase-admin';
-import dotenv from 'dotenv';
-import authRoutes from './routes/authRoutes';
-import questionRoutes from './routes/questionRoutes';
-import leaderboardRoutes from './routes/leaderboardRoutes';
+import express from "express";
+import cors from "cors";
+import admin from "firebase-admin";
+import dotenv from "dotenv";
+import authRoutes from "./routes/authRoutes";
+import questionRoutes from "./routes/questionRoutes";
+import leaderboardRoutes from "./routes/leaderboardRoutes";
 
 dotenv.config();
 
-const serviceAccount = require('../serviceAccountKey.json');
+let serviceAccount;
+
+if (process.env.SERVICE_ACCOUNT_JSON) {
+  // Running in Firebase App Hosting
+  serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_JSON);
+} else {
+  // Local development
+  serviceAccount = require("../serviceAccountKey.json");
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -17,7 +25,7 @@ admin.initializeApp({
 
 const db = admin.firestore();
 const app = express();
-const port = process.env.PORT || 5000;
+const port = Number(process.env.PORT) || 8080;
 
 app.use(cors());
 app.use(express.json());
@@ -30,12 +38,15 @@ app.use((req, res, next) => {
 
 // Test route
 app.get("/test", (req, res) => {
-  res.json({ message: "Backend is working!", timestamp: new Date().toISOString() });
+  res.json({
+    message: "Backend is working!",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Utility function
 const getCurrentDay = (): number => {
-  const startDate = new Date('2025-09-30');
+  const startDate = new Date("2025-09-30");
   const today = new Date();
   const diffTime = today.getTime() - startDate.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -51,6 +62,6 @@ app.use(authRoutes);
 app.use(questionRoutes);
 app.use(leaderboardRoutes);
 
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port}`);
 });

@@ -1,0 +1,21 @@
+# Settings for Backend (on Cloud Run).
+# See https://firebase.google.com/docs/app-hosting/configure#cloud-run
+runConfig:
+  minInstances: 0
+  # maxInstances: 100
+  # concurrency: 80
+  # cpu: 1
+  # memoryMiB: 512
+env:
+  - variable: FIREBASE_PROJECT_ID
+    value: "enigma-d05b9"
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: SERVICE_ACCOUNT_JSON
+    secret: SERVICE_ACCOUNT_JSON
+
+scripts:
+  buildCommand: cd apps/backend && pnpm install --frozen-lockfile && pnpm build
+  runCommand: node apps/backend/dist/src/index.js
