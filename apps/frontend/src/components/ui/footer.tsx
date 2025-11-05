@@ -1,5 +1,5 @@
-import footer1 from '@/assets/footer1.svg';
-import footer2 from '@/assets/footer2.svg';
+import footer1 from '@/assets/footer1.webp';
+import footer2 from '@/assets/footer2.webp';
 import { Logo } from './shadcn-io/navbar-01';
 
 const Footer: React.FC = () => {

@@ -15,6 +15,10 @@ interface LeaderboardEntry {
   rank: number;
 }
 
+// Cache configuration - 5 minute cache to reduce Firestore reads
+const CACHE_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
+const leaderboardCache = new Map<number, { data: LeaderboardEntry[], timestamp: number }>();
+
 export default function LeaderboardPage() {
   const { user } = useAuth();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -33,13 +37,33 @@ export default function LeaderboardPage() {
   const fetchLeaderboard = async (day: number) => {
     setLoading(true);
     try {
-      const data = await getDailyLeaderboard(day, 20);
-      setLeaderboard(data);
+      // Check cache first
+      const cached = leaderboardCache.get(day);
+      const now = Date.now();
 
-      // Find user's rank
-      if (user) {
-        const userEntry = data.find((entry) => entry.id === user.uid);
-        setUserRank(userEntry ? userEntry.rank : null);
+      if (cached && (now - cached.timestamp) < CACHE_TIME) {
+        // Use cached data
+        setLeaderboard(cached.data);
+
+        // Find user's rank from cache
+        if (user) {
+          const userEntry = cached.data.find((entry) => entry.id === user.uid);
+          setUserRank(userEntry ? userEntry.rank : null);
+        }
+      } else {
+        // Fetch fresh data from Firestore
+        const data = await getDailyLeaderboard(day, 20);
+
+        // Update cache
+        leaderboardCache.set(day, { data, timestamp: now });
+
+        setLeaderboard(data);
+
+        // Find user's rank
+        if (user) {
+          const userEntry = data.find((entry) => entry.id === user.uid);
+          setUserRank(userEntry ? userEntry.rank : null);
+        }
       }
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
