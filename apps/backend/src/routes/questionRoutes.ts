@@ -343,37 +343,50 @@ router.post(
         });
       }
 
-      // Enforce cooldown
+      // Check cooldown and reset attempts if cooldown expired
       const cooldownUntil = getNested(
         userData,
         `attempts.day${day}.cooldownUntil`,
         null,
       );
+      let attemptCount = Number(
+        getNested(userData, `attempts.day${day}.count`, 0),
+      );
+
       if (cooldownUntil && cooldownUntil.toDate) {
         const now = new Date();
         const remainingMs = cooldownUntil.toDate().getTime() - now.getTime();
         const remainingSec = Math.ceil(remainingMs / 1000);
+
         if (remainingSec > 0) {
+          // Cooldown still active
           return res.status(429).json({
             result: `Please wait ${remainingSec}s before your next attempt`,
             correct: false,
-            attemptsLeft: Math.max(
-              0,
-              MAX_ATTEMPTS_PER_DAY -
-                Number(getNested(userData, `attempts.day${day}.count`, 0)),
-            ),
+            attemptsLeft: 0,
             cooldownSeconds: remainingSec,
           });
+        } else {
+          // Cooldown expired, reset attempt count
+          attemptCount = 0;
+          await userRef.set(
+            {
+              attempts: {
+                [`day${day}`]: {
+                  count: 0,
+                  cooldownUntil: admin.firestore.FieldValue.delete(),
+                },
+              },
+            },
+            { merge: true },
+          );
         }
       }
 
-      // Enforce attempt limit
-      const attemptCount = Number(
-        getNested(userData, `attempts.day${day}.count`, 0),
-      );
+      // Enforce attempt limit (should only trigger if cooldown wasn't set properly)
       if (attemptCount >= MAX_ATTEMPTS_PER_DAY) {
         return res.status(429).json({
-          result: "Attempt limit reached for today",
+          result: "Attempt limit reached. Please wait for cooldown.",
           correct: false,
           attemptsLeft: 0,
           cooldownSeconds: 0,
@@ -406,35 +419,55 @@ router.post(
           cooldownSeconds: 0,
         });
       } else {
-        // Wrong answer: increment attempts and set cooldown 30s from now
-        const now = admin.firestore.Timestamp.now();
-        const cooldownUntilTs = admin.firestore.Timestamp.fromMillis(
-          now.toMillis() + WRONG_COOLDOWN_SECONDS * 1000,
-        );
+        // Wrong answer: increment attempts
+        const newAttemptCount = attemptCount + 1;
+        const attemptsLeft = Math.max(0, MAX_ATTEMPTS_PER_DAY - newAttemptCount);
 
-        await userRef.set(
-          {
-            attempts: {
-              [`day${day}`]: {
-                count: attemptCount + 1,
-                cooldownUntil: cooldownUntilTs,
+        // Only set cooldown if this was the last attempt
+        if (newAttemptCount >= MAX_ATTEMPTS_PER_DAY) {
+          const now = admin.firestore.Timestamp.now();
+          const cooldownUntilTs = admin.firestore.Timestamp.fromMillis(
+            now.toMillis() + WRONG_COOLDOWN_SECONDS * 1000,
+          );
+
+          await userRef.set(
+            {
+              attempts: {
+                [`day${day}`]: {
+                  count: newAttemptCount,
+                  cooldownUntil: cooldownUntilTs,
+                },
               },
             },
-          },
-          { merge: true },
-        );
+            { merge: true },
+          );
 
-        const attemptsLeft = Math.max(
-          0,
-          MAX_ATTEMPTS_PER_DAY - (attemptCount + 1),
-        );
+          return res.status(200).json({
+            result: `Incorrect answer. All ${MAX_ATTEMPTS_PER_DAY} attempts used. Try again after ${WRONG_COOLDOWN_SECONDS}s cooldown.`,
+            correct: false,
+            attemptsLeft: 0,
+            cooldownSeconds: WRONG_COOLDOWN_SECONDS,
+          });
+        } else {
+          // Still has attempts left, no cooldown
+          await userRef.set(
+            {
+              attempts: {
+                [`day${day}`]: {
+                  count: newAttemptCount,
+                },
+              },
+            },
+            { merge: true },
+          );
 
-        return res.status(200).json({
-          result: "Incorrect answer. Try again after cooldown.",
-          correct: false,
-          attemptsLeft,
-          cooldownSeconds: WRONG_COOLDOWN_SECONDS,
-        });
+          return res.status(200).json({
+            result: `Incorrect answer. You have ${attemptsLeft} attempts remaining.`,
+            correct: false,
+            attemptsLeft,
+            cooldownSeconds: 0,
+          });
+        }
       }
     } catch (error) {
       console.error("Error validating answer:", error);
