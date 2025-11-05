@@ -1,5 +1,5 @@
 import { Navbar01 } from "@/components/ui/shadcn-io/navbar-01";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getCurrentDay } from "../services/firestoreService";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,8 @@ interface QuestionResponse {
   hint: string;
   difficulty: number;
   image?: string;
-  attemptsLeft: number;
-  maxAttempts: number;
+  attemptsBeforeCooldown: number;
+  attemptsInPeriod: number;
   isCompleted?: boolean;
   cooldownSeconds?: number;
   isUnlocked?: boolean;
@@ -29,8 +29,6 @@ interface ProgressResponse {
     isCompleted: boolean;
     isAccessible: boolean;
     reason: string;
-    attemptsUsed: number;
-    attemptsLeft: number;
     isCurrentDay: boolean;
     isDateUnlocked: boolean;
   }>;
@@ -52,8 +50,8 @@ function PlayPage() {
   const [isCompleted, setIsCompleted] = useState(false);
   const [difficulty, setDifficulty] = useState(1);
   const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
-  const [attemptsLeft, setAttemptsLeft] = useState<number>(0);
-  const [maxAttempts] = useState(10);
+  const [attemptsBeforeCooldown, setAttemptsBeforeCooldown] = useState<number>(10);
+  const [attemptsInPeriod, setAttemptsInPeriod] = useState<number>(0);
   const [, setCooldownMsg] = useState("");
 
   // New state for enhanced navigation and unlock date handling
@@ -67,13 +65,57 @@ function PlayPage() {
   const [questionLoading, setQuestionLoading] = useState(false);
   const [dateLockedUntil, setDateLockedUntil] = useState<string | null>(null);
 
+  // Cooldown countdown timer with auto-refresh
   useEffect(() => {
     if (cooldownSeconds <= 0) return;
     const interval = setInterval(() => {
-      setCooldownSeconds((prev) => Math.max(0, prev - 1));
+      setCooldownSeconds((prev) => {
+        const newValue = Math.max(0, prev - 1);
+        return newValue;
+      });
     }, 1000);
     return () => clearInterval(interval);
   }, [cooldownSeconds]);
+
+  // Auto-refresh when cooldown expires
+  // Use a ref to track if we've already refreshed to prevent duplicate calls
+  const hasRefreshedRef = useRef(false);
+
+  useEffect(() => {
+    // Only refresh when cooldown hits exactly 0 (not on every countdown tick)
+    if (cooldownSeconds === 0 && attemptsInPeriod >= 10 && !hasRefreshedRef.current) {
+      hasRefreshedRef.current = true;
+
+      // Cooldown just expired, fetch fresh data from server
+      const refreshData = async () => {
+        if (!user) return;
+
+        try {
+          const token = await user.getIdToken();
+          const url = `${import.meta.env.VITE_BACKEND_SERVER_URL || "http://localhost:5000"}/play?day=${displayDay}`;
+          const response = await fetch(url, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (response.ok) {
+            const data: QuestionResponse = await response.json();
+            setAttemptsBeforeCooldown(data.attemptsBeforeCooldown ?? 10);
+            setAttemptsInPeriod(data.attemptsInPeriod ?? 0);
+            setCooldownSeconds(data.cooldownSeconds || 0);
+          }
+        } catch (error) {
+          console.error("Error refreshing after cooldown:", error);
+        }
+      };
+
+      refreshData();
+    }
+
+    // Reset the ref when cooldown starts again
+    if (cooldownSeconds > 0) {
+      hasRefreshedRef.current = false;
+    }
+  }, [cooldownSeconds, attemptsInPeriod, user, displayDay]);
 
   const fetchProgress = async (): Promise<ProgressResponse | null> => {
     if (!user) return null;
@@ -102,15 +144,25 @@ function PlayPage() {
   };
 
   const findNextAvailableQuestion = (progressData: ProgressResponse): number => {
-    const nextIncomplete = progressData.progress.find(day => 
-      !day.isCompleted && day.isAccessible
+    // First, try to find an incomplete and accessible day (unlocked by serial progression)
+    const nextIncomplete = progressData.progress.find(day =>
+      !day.isCompleted && day.isAccessible && day.isDateUnlocked
     );
-    
+
     if (nextIncomplete) {
       return nextIncomplete.day;
     }
-    
-    return progressData.currentDay;
+
+    // If no accessible days, find the first incomplete day
+    // This ensures new users start at Day 1, not Day 10
+    const firstIncomplete = progressData.progress.find(day => !day.isCompleted);
+
+    if (firstIncomplete) {
+      return firstIncomplete.day;
+    }
+
+    // If everything is completed, return Day 1 (to show completion state)
+    return 1;
   };
 
   const fetchQuestion = async (day?: number) => {
@@ -164,7 +216,8 @@ function PlayPage() {
       }
 
       setIsCompleted(data.isCompleted || false);
-      setAttemptsLeft(data.attemptsLeft || 0);
+      setAttemptsBeforeCooldown(data.attemptsBeforeCooldown ?? 10);
+      setAttemptsInPeriod(data.attemptsInPeriod ?? 0);
       setCooldownSeconds(data.cooldownSeconds || 0);
       setIsUnlocked(data.isUnlocked || false);
       setLockReason(data.lockReason || "");
@@ -185,13 +238,21 @@ function PlayPage() {
   const initializePage = async () => {
     if (!user) return;
 
-    const progressData = await fetchProgress();
-    if (!progressData) return;
+    // OPTIMIZATION: Fetch both in parallel instead of sequentially
+    const [progressData] = await Promise.all([
+      fetchProgress(),
+      fetchQuestion() // Fetch current day question immediately
+    ]);
 
-    const nextDay = findNextAvailableQuestion(progressData);
-    setRecommendedDay(nextDay);
+    if (progressData) {
+      const nextDay = findNextAvailableQuestion(progressData);
+      setRecommendedDay(nextDay);
 
-    await fetchQuestion(nextDay);
+      // Only fetch again if nextDay is different from current day
+      if (nextDay !== displayDay) {
+        await fetchQuestion(nextDay);
+      }
+    }
   };
 
   useEffect(() => {
@@ -222,11 +283,6 @@ function PlayPage() {
       return;
     }
 
-    if (attemptsLeft <= 0) {
-      setResult("Attempt limit reached for today");
-      return;
-    }
-
     setLoading(true);
     setResult("");
     setCooldownMsg("");
@@ -244,13 +300,14 @@ function PlayPage() {
           body: JSON.stringify({ day: displayDay, answer }),
         }
       );
-      
+
       const data = await response.json();
       setResult(data.result);
 
       if (response.status === 429) {
         setCooldownSeconds(data.cooldownSeconds || 0);
-        setAttemptsLeft(data.attemptsLeft || 0);
+        setAttemptsBeforeCooldown(data.attemptsBeforeCooldown ?? 10);
+        setAttemptsInPeriod(data.attemptsInPeriod ?? 0);
         return;
       }
 
@@ -258,14 +315,15 @@ function PlayPage() {
         setIsCompleted(true);
         setAnswer("");
         await refreshUserProgress();
-        
+
         const updatedProgress = await fetchProgress();
         if (updatedProgress) {
           const nextDay = findNextAvailableQuestion(updatedProgress);
           setRecommendedDay(nextDay);
         }
       } else {
-        setAttemptsLeft(data.attemptsLeft || 0);
+        setAttemptsBeforeCooldown(data.attemptsBeforeCooldown ?? 10);
+        setAttemptsInPeriod(data.attemptsInPeriod ?? 0);
         setCooldownSeconds(data.cooldownSeconds || 0);
       }
     } catch (error) {
@@ -298,7 +356,7 @@ function PlayPage() {
   };
 
 
-  const outOfAttempts = attemptsLeft <= 0;
+  // Users never run out of attempts, only cooldowns apply
   const calendarDay = getCurrentDay();
   const hasAvailableQuestions = userProgressData?.progress.some(day => 
     !day.isCompleted && day.isAccessible
@@ -359,7 +417,7 @@ function PlayPage() {
             {/* Status indicators */}
             <div className="flex flex-wrap items-center gap-3">
               <span className="px-3 py-1 rounded-full text-sm border bg-muted/30">
-                Attempts left: <strong>{attemptsLeft}</strong>
+                Attempts before cooldown: <strong>{attemptsBeforeCooldown}</strong>
               </span>
               {cooldownSeconds > 0 && (
                 <span className="px-3 py-1 rounded-full text-sm border bg-yellow-50 text-yellow-800">
@@ -458,7 +516,7 @@ function PlayPage() {
                       )}
                       {day.isAccessible && !day.isCompleted && day.isDateUnlocked && (
                         <div className="text-xs text-blue-600 mt-1">
-                          {day.attemptsLeft} attempts left
+                          Available
                         </div>
                       )}
                     </div>
@@ -521,14 +579,12 @@ function PlayPage() {
                     </span>
                     <span
                       className={`px-3 py-1 text-sm rounded-full ${
-                        outOfAttempts
-                          ? "bg-destructive/20 text-destructive"
-                          : attemptsLeft <= 3
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-secondary text-secondary-foreground"
+                        attemptsBeforeCooldown <= 3
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-secondary text-secondary-foreground"
                       }`}
                     >
-                      {outOfAttempts ? "No attempts" : `${attemptsLeft}/${maxAttempts} left`}
+                      {attemptsBeforeCooldown} attempts until cooldown
                     </span>
                   </div>
                 </div>
@@ -558,22 +614,20 @@ function PlayPage() {
                     placeholder="Enter your answer here..."
                     className="text-lg"
                     onKeyPress={(e) =>
-                      e.key === "Enter" && !loading && cooldownSeconds === 0 && attemptsLeft > 0 && submitAnswer()
+                      e.key === "Enter" && !loading && cooldownSeconds === 0 && submitAnswer()
                     }
-                    disabled={cooldownSeconds > 0 || attemptsLeft <= 0}
+                    disabled={cooldownSeconds > 0}
                   />
                   <Button
                     onClick={submitAnswer}
-                    disabled={loading || !answer.trim() || cooldownSeconds > 0 || attemptsLeft <= 0}
+                    disabled={loading || !answer.trim() || cooldownSeconds > 0}
                     className="w-full py-4 text-lg"
                   >
                     {loading
                       ? "Submitting..."
                       : cooldownSeconds > 0
                         ? `Wait ${cooldownSeconds}s`
-                        : attemptsLeft <= 0
-                          ? "No attempts left"
-                          : "Submit Answer"}
+                        : "Submit Answer"}
                   </Button>
                 </div>
               ) : isCompleted ? (
