@@ -34,8 +34,8 @@ const isQuestionUnlockedByDate = (unlockDate: admin.firestore.Timestamp): boolea
   return now >= unlockDateTime;
 };
 
-const MAX_ATTEMPTS_PER_DAY = 10;
 const WRONG_COOLDOWN_SECONDS = 30;
+const MAX_ATTEMPTS_BEFORE_COOLDOWN = 10; // Number of attempts allowed before triggering cooldown
 
 router.get("/play", authMiddleware, async (req: Request, res: Response) => {
   const { db, getCurrentDay } = req.app.locals;
@@ -129,20 +129,41 @@ router.get("/play", authMiddleware, async (req: Request, res: Response) => {
       `completed.day${currentDay}.done`,
       false,
     );
-    const attemptCount = Number(
-      getNested(userData, `attempts.day${currentDay}.count`, 0),
-    );
     const cooldownUntilTs = getNested(
       userData,
       `attempts.day${currentDay}.cooldownUntil`,
       null,
     );
 
+    // Get attempts in current cooldown period
+    let attemptsInPeriod = Number(
+      getNested(userData, `attempts.day${currentDay}.attemptsInCooldownPeriod`, 0),
+    );
+
     let cooldownSeconds = 0;
     if (cooldownUntilTs && cooldownUntilTs.toDate) {
       const now = new Date();
       const diffMs = cooldownUntilTs.toDate().getTime() - now.getTime();
-      cooldownSeconds = Math.max(0, Math.ceil(diffMs / 1000));
+      if (diffMs > 0) {
+        cooldownSeconds = Math.ceil(diffMs / 1000);
+      } else {
+        // Cooldown has expired - reset the counter
+        if (attemptsInPeriod >= MAX_ATTEMPTS_BEFORE_COOLDOWN) {
+          attemptsInPeriod = 0;
+          // Clear the cooldown data from database
+          await userRef.set(
+            {
+              attempts: {
+                [`day${currentDay}`]: {
+                  attemptsInCooldownPeriod: 0,
+                  cooldownUntil: admin.firestore.FieldValue.delete(),
+                },
+              },
+            },
+            { merge: true },
+          );
+        }
+      }
     }
 
     const response = {
@@ -154,8 +175,9 @@ router.get("/play", authMiddleware, async (req: Request, res: Response) => {
       image: questionData.image,
       // User status
       isCompleted: completedForDay,
-      attemptsLeft: Math.max(0, MAX_ATTEMPTS_PER_DAY - attemptCount),
       cooldownSeconds,
+      attemptsInPeriod,
+      attemptsBeforeCooldown: Math.max(0, MAX_ATTEMPTS_BEFORE_COOLDOWN - attemptsInPeriod),
       // Serial progression
       isUnlocked,
       lockReason,
@@ -198,20 +220,16 @@ router.get("/progress", authMiddleware, async (req: Request, res: Response) => {
         `completed.day${day}.done`,
         false,
       );
-      
-      const attemptCount = Number(
-        getNested(userData, `attempts.day${day}.count`, 0),
-      );
 
       // Determine if this day is accessible
       let isAccessible = true;
       let reason = "";
-      
+
       // First check date unlock
       if (!isDateUnlocked) {
         isAccessible = false;
-        reason = `Unlocks ${questionDoc.exists ? 
-          (questionDoc.data() as QuestionData).unlockDate.toDate().toLocaleDateString() : 
+        reason = `Unlocks ${questionDoc.exists ?
+          (questionDoc.data() as QuestionData).unlockDate.toDate().toLocaleDateString() :
           'soon'
         }`;
       } else if (day > 1) {
@@ -221,7 +239,7 @@ router.get("/progress", authMiddleware, async (req: Request, res: Response) => {
           `completed.day${day - 1}.done`,
           false,
         );
-        
+
         if (!previousDayCompleted) {
           isAccessible = false;
           reason = `Complete Day ${day - 1} first`;
@@ -233,8 +251,6 @@ router.get("/progress", authMiddleware, async (req: Request, res: Response) => {
         isCompleted,
         isAccessible,
         reason,
-        attemptsUsed: attemptCount,
-        attemptsLeft: Math.max(0, MAX_ATTEMPTS_PER_DAY - attemptCount),
         isCurrentDay: day === currentDay,
         isDateUnlocked,
       });
@@ -334,14 +350,14 @@ router.post(
         return res.status(200).json({
           result: "Already completed for today",
           correct: true,
-          attemptsLeft: Math.max(
-            0,
-            MAX_ATTEMPTS_PER_DAY -
-              Number(getNested(userData, `attempts.day${day}.count`, 0)),
-          ),
           cooldownSeconds: 0,
         });
       }
+
+      // Get attempts in current cooldown period
+      let attemptsInPeriod = Number(
+        getNested(userData, `attempts.day${day}.attemptsInCooldownPeriod`, 0),
+      );
 
       // Enforce cooldown
       const cooldownUntil = getNested(
@@ -349,34 +365,43 @@ router.post(
         `attempts.day${day}.cooldownUntil`,
         null,
       );
+
+      let isInCooldown = false;
+      let cooldownRemainingSec = 0;
+
       if (cooldownUntil && cooldownUntil.toDate) {
         const now = new Date();
         const remainingMs = cooldownUntil.toDate().getTime() - now.getTime();
-        const remainingSec = Math.ceil(remainingMs / 1000);
-        if (remainingSec > 0) {
-          return res.status(429).json({
-            result: `Please wait ${remainingSec}s before your next attempt`,
-            correct: false,
-            attemptsLeft: Math.max(
-              0,
-              MAX_ATTEMPTS_PER_DAY -
-                Number(getNested(userData, `attempts.day${day}.count`, 0)),
-            ),
-            cooldownSeconds: remainingSec,
-          });
+        cooldownRemainingSec = Math.ceil(remainingMs / 1000);
+        if (cooldownRemainingSec > 0) {
+          isInCooldown = true;
+        } else {
+          // Cooldown has expired - reset the counter
+          if (attemptsInPeriod >= MAX_ATTEMPTS_BEFORE_COOLDOWN) {
+            attemptsInPeriod = 0;
+            // Clear the cooldown data from database
+            await userRef.set(
+              {
+                attempts: {
+                  [`day${day}`]: {
+                    attemptsInCooldownPeriod: 0,
+                    cooldownUntil: admin.firestore.FieldValue.delete(),
+                  },
+                },
+              },
+              { merge: true },
+            );
+          }
         }
       }
 
-      // Enforce attempt limit
-      const attemptCount = Number(
-        getNested(userData, `attempts.day${day}.count`, 0),
-      );
-      if (attemptCount >= MAX_ATTEMPTS_PER_DAY) {
+      if (isInCooldown) {
         return res.status(429).json({
-          result: "Attempt limit reached for today",
+          result: `Please wait ${cooldownRemainingSec}s before your next attempt`,
           correct: false,
-          attemptsLeft: 0,
-          cooldownSeconds: 0,
+          cooldownSeconds: cooldownRemainingSec,
+          attemptsInPeriod,
+          attemptsBeforeCooldown: Math.max(0, MAX_ATTEMPTS_BEFORE_COOLDOWN - attemptsInPeriod),
         });
       }
 
@@ -402,38 +427,55 @@ router.post(
         return res.json({
           result: "Success 🎉 Correct Answer!",
           correct: true,
-          attemptsLeft: Math.max(0, MAX_ATTEMPTS_PER_DAY - attemptCount),
           cooldownSeconds: 0,
         });
       } else {
-        // Wrong answer: increment attempts and set cooldown 30s from now
+        // Wrong answer: increment attempts in current period
         const now = admin.firestore.Timestamp.now();
-        const cooldownUntilTs = admin.firestore.Timestamp.fromMillis(
-          now.toMillis() + WRONG_COOLDOWN_SECONDS * 1000,
-        );
+        const newAttemptsInPeriod = attemptsInPeriod + 1;
 
-        await userRef.set(
-          {
-            attempts: {
-              [`day${day}`]: {
-                count: attemptCount + 1,
-                cooldownUntil: cooldownUntilTs,
-              },
+        // Check if we need to trigger cooldown (after 10 attempts)
+        let cooldownUntilTs = null;
+        let cooldownSecondsToReturn = 0;
+
+        if (newAttemptsInPeriod >= MAX_ATTEMPTS_BEFORE_COOLDOWN) {
+          // Trigger cooldown after 10 attempts
+          cooldownUntilTs = admin.firestore.Timestamp.fromMillis(
+            now.toMillis() + WRONG_COOLDOWN_SECONDS * 1000,
+          );
+          cooldownSecondsToReturn = WRONG_COOLDOWN_SECONDS;
+        }
+
+        // Update database
+        const updateData: any = {
+          attempts: {
+            [`day${day}`]: {
+              attemptsInCooldownPeriod: newAttemptsInPeriod,
             },
           },
-          { merge: true },
+        };
+
+        if (cooldownUntilTs) {
+          updateData.attempts[`day${day}`].cooldownUntil = cooldownUntilTs;
+        }
+
+        await userRef.set(updateData, { merge: true });
+
+        const attemptsBeforeCooldown = Math.max(
+          0,
+          MAX_ATTEMPTS_BEFORE_COOLDOWN - newAttemptsInPeriod,
         );
 
-        const attemptsLeft = Math.max(
-          0,
-          MAX_ATTEMPTS_PER_DAY - (attemptCount + 1),
-        );
+        const resultMessage = cooldownSecondsToReturn > 0
+          ? `Incorrect answer. You've used ${newAttemptsInPeriod} attempts. Please wait ${cooldownSecondsToReturn}s before trying again.`
+          : `Incorrect answer. ${attemptsBeforeCooldown} attempts left before cooldown.`;
 
         return res.status(200).json({
-          result: "Incorrect answer. Try again after cooldown.",
+          result: resultMessage,
           correct: false,
-          attemptsLeft,
-          cooldownSeconds: WRONG_COOLDOWN_SECONDS,
+          cooldownSeconds: cooldownSecondsToReturn,
+          attemptsInPeriod: newAttemptsInPeriod,
+          attemptsBeforeCooldown,
         });
       }
     } catch (error) {
