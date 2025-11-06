@@ -13,7 +13,10 @@ import {
   Timestamp,
   QueryDocumentSnapshot
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { app } from '../lib/firebase';
+import { getFirestore } from 'firebase/firestore';
+
+const db = getFirestore(app);
 
 export interface User {
   id: string;

@@ -1,10 +1,6 @@
-import { Navbar01 } from "@/components/ui/shadcn-io/navbar-01";
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
-import {
-  getCurrentDay,
-  getDailyLeaderboard,
-} from "../services/firestoreService";
+import { useAuth } from "../contexts/AuthContext";
+import { getCurrentDay, getDailyLeaderboard } from "../services/firestoreService";
 import { Button } from "@/components/ui/button";
 
 interface LeaderboardEntry {
@@ -20,12 +16,13 @@ const CACHE_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
 const leaderboardCache = new Map<number, { data: LeaderboardEntry[], timestamp: number }>();
 
 export default function LeaderboardPage() {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [currentDay, setCurrentDay] = useState(1);
   const [selectedDay, setSelectedDay] = useState(1);
   const [loading, setLoading] = useState(true);
   const [userRank, setUserRank] = useState<number | null>(null);
+
 
   useEffect(() => {
     const day = getCurrentDay();
@@ -37,33 +34,13 @@ export default function LeaderboardPage() {
   const fetchLeaderboard = async (day: number) => {
     setLoading(true);
     try {
-      // Check cache first
-      const cached = leaderboardCache.get(day);
-      const now = Date.now();
-
-      if (cached && (now - cached.timestamp) < CACHE_TIME) {
-        // Use cached data
-        setLeaderboard(cached.data);
-
-        // Find user's rank from cache
-        if (user) {
-          const userEntry = cached.data.find((entry) => entry.id === user.uid);
-          setUserRank(userEntry ? userEntry.rank : null);
-        }
-      } else {
-        // Fetch fresh data from Firestore
-        const data = await getDailyLeaderboard(day, 20);
-
-        // Update cache
-        leaderboardCache.set(day, { data, timestamp: now });
-
-        setLeaderboard(data);
-
-        // Find user's rank
-        if (user) {
-          const userEntry = data.find((entry) => entry.id === user.uid);
-          setUserRank(userEntry ? userEntry.rank : null);
-        }
+      const data = await getDailyLeaderboard(day, 20);
+      setLeaderboard(data);
+      
+      // Find user's rank
+      if (currentUser) {
+        const userEntry = data.find(entry => entry.id === currentUser.uid);
+        setUserRank(userEntry ? userEntry.rank : null);
       }
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
@@ -97,8 +74,6 @@ export default function LeaderboardPage() {
 
   return (
     <div className="relative w-full min-h-screen bg-background">
-      <Navbar01 />
-
       <div className="container mx-auto px-4 md:px-6 py-8">
         {/* Header */}
         <div className="text-center mb-8">
@@ -141,7 +116,7 @@ export default function LeaderboardPage() {
         </div>
 
         {/* User's Rank (if applicable) */}
-        {user && userRank && (
+        {currentUser && userRank && (
           <div className="bg-primary/10 border border-primary/20 text-primary px-6 py-4 rounded-lg mb-6">
             <div className="flex items-center justify-between">
               <div>
@@ -189,7 +164,7 @@ export default function LeaderboardPage() {
                 <div
                   key={entry.id}
                   className={`px-6 py-4 flex items-center justify-between ${
-                    user && entry.id === user.uid ? "bg-primary/5" : ""
+                    currentUser && entry.id === currentUser.uid ? 'bg-primary/5' : ''
                   }`}
                 >
                   <div className="flex items-center space-x-4">
@@ -198,8 +173,8 @@ export default function LeaderboardPage() {
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-foreground">
-                        {entry.name || "Anonymous"}
-                        {user && entry.id === user.uid && " (You)"}
+                        {entry.name || 'Anonymous'}
+                        {currentUser && entry.id === currentUser.uid && ' (You)'}
                       </h3>
                       <p className="text-sm text-muted-foreground">
                         {entry.email}
