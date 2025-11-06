@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { getCurrentDay } from "../services/firestoreService";
 
 // Lightweight types for hook responses. Kept local to avoid touching global types.
@@ -52,6 +52,7 @@ export function usePlay(user: any) {
   const COOLDOWN_THRESHOLD = 10; // attempts
   const COOLDOWN_TIME = 30; // seconds
   const cooldownRef = useRef<number | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Countdown timer effect
   useEffect(() => {
@@ -86,8 +87,8 @@ export function usePlay(user: any) {
     };
   }, [cooldownSeconds]);
 
-  // Fetch progress with a small session cache
-  const fetchProgress = async (force = false): Promise<ProgressResponse | null> => {
+  // Fetch progress with a small session cache and request deduplication
+  const fetchProgress = useCallback(async (force = false): Promise<ProgressResponse | null> => {
     if (!user) return null;
     try {
       if (!force) {
@@ -103,7 +104,9 @@ export function usePlay(user: any) {
       const token = await user.getIdToken();
       const res = await fetch(`${BACKEND}/progress`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) {
-        console.error('fetchProgress failed', await res.text());
+        if (import.meta.env.DEV) {
+          console.error('fetchProgress failed', await res.text());
+        }
         return null;
       }
       const data = (await res.json()) as ProgressResponse;
@@ -112,46 +115,94 @@ export function usePlay(user: any) {
       setProgress(data);
       return data;
     } catch (err) {
-      console.error('fetchProgress error', err);
+      if (import.meta.env.DEV) {
+        console.error('fetchProgress error', err);
+      }
       return null;
     }
-  };
+  }, [user, BACKEND]);
 
-  // Fetch question for a day, but do not allow asking for a future day.
-  const fetchQuestion = async (day?: number) => {
+  // Fetch question for a day with caching and request deduplication
+  const fetchQuestion = useCallback(async (day?: number) => {
     if (!user) return null;
-    setQuestionLoading(true);
-    try {
-      const currentDay = getCurrentDay();
-      const targetDay = typeof day === 'number' ? day : currentDay;
-      const allowedDay = Math.min(targetDay, currentDay);
 
-      const token = await user.getIdToken();
-      const url = `${BACKEND}/play?day=${allowedDay}`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) {
-        console.error('fetchQuestion failed', await res.text());
-        setQuestion(null);
-        return null;
-      }
-      const data = (await res.json()) as QuestionResponse;
+    const currentDay = getCurrentDay();
+    const targetDay = typeof day === 'number' ? day : currentDay;
+    const allowedDay = Math.min(targetDay, currentDay);
+
+    // Check cache first (30 seconds cache) BEFORE creating AbortController
+    const cacheKey = `question_${allowedDay}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    const ts = sessionStorage.getItem(`${cacheKey}_ts`);
+    if (cached && ts && Date.now() - Number(ts) < 30 * 1000) {
+      const data = JSON.parse(cached) as QuestionResponse;
       setQuestion(data);
       setDisplayDay(data.day);
       setAttemptsBeforeCooldown(data.attemptsBeforeCooldown ?? 10);
       setAttemptsInPeriod(data.attemptsInPeriod ?? 0);
       setCooldownSeconds(data.cooldownSeconds ?? 0);
       return data;
-    } catch (err) {
-      console.error('fetchQuestion error', err);
+    }
+
+    // Only create AbortController if we're actually going to fetch
+    setQuestionLoading(true);
+
+    // Abort any pending request and create a new controller
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create a local AbortController for this specific request
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    try {
+      const token = await user.getIdToken();
+      const url = `${BACKEND}/play?day=${allowedDay}`;
+
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal
+      });
+
+      if (!res.ok) {
+        if (import.meta.env.DEV) {
+          console.error('fetchQuestion failed', await res.text());
+        }
+        setQuestion(null);
+        return null;
+      }
+      const data = (await res.json()) as QuestionResponse;
+
+      // Cache the question
+      sessionStorage.setItem(cacheKey, JSON.stringify(data));
+      sessionStorage.setItem(`${cacheKey}_ts`, Date.now().toString());
+
+      setQuestion(data);
+      setDisplayDay(data.day);
+      setAttemptsBeforeCooldown(data.attemptsBeforeCooldown ?? 10);
+      setAttemptsInPeriod(data.attemptsInPeriod ?? 0);
+      setCooldownSeconds(data.cooldownSeconds ?? 0);
+      return data;
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        // Request was aborted, ignore
+        return null;
+      }
+      if (import.meta.env.DEV) {
+        console.error('fetchQuestion error', err);
+      }
       setQuestion(null);
       return null;
     } finally {
       setQuestionLoading(false);
+      // Don't set ref to null - leave it for cleanup on unmount
+      // This prevents race conditions with concurrent calls
     }
-  };
+  }, [user, BACKEND]);
 
-  // Submit answer: enforce local cooldown after threshold; server can override with returned values.
-  const submitAnswer = async (answer: string) => {
+  // Submit answer with cooldown enforcement
+  const submitAnswer = useCallback(async (answer: string) => {
     if (!user) return { ok: false, message: 'Not authenticated' };
     if (cooldownSeconds > 0) return { ok: false, message: `Please wait ${cooldownSeconds}s` };
 
@@ -177,15 +228,47 @@ export function usePlay(user: any) {
       if (typeof data.attemptsInPeriod === 'number') setAttemptsInPeriod(data.attemptsInPeriod);
       if (typeof data.attemptsBeforeCooldown === 'number') setAttemptsBeforeCooldown(data.attemptsBeforeCooldown);
 
+      // Invalidate question cache on submission
+      sessionStorage.removeItem(`question_${displayDay}`);
+
+      // If answer is correct, refresh progress and navigate to next question
+      if (res.ok && data.correct) {
+        // Invalidate progress cache to get fresh unlocked state
+        sessionStorage.removeItem('userProgress');
+        sessionStorage.removeItem('userProgressTs');
+
+        // Force refresh progress to see newly unlocked questions
+        const updatedProgress = await fetchProgress(true);
+
+        // Auto-navigate to next question if it exists and is unlocked
+        if (updatedProgress) {
+          const currentDay = getCurrentDay();
+          const nextDay = displayDay + 1;
+          const maxDay = Math.min(currentDay, updatedProgress.totalDays || currentDay);
+
+          if (nextDay <= maxDay) {
+            const nextDayProgress = updatedProgress.progress.find(d => d.day === nextDay);
+            if (nextDayProgress && nextDayProgress.isAccessible && !nextDayProgress.isCompleted) {
+              // Invalidate next question's cache to ensure fresh data
+              sessionStorage.removeItem(`question_${nextDay}`);
+              // Navigate to next question
+              await fetchQuestion(nextDay);
+            }
+          }
+        }
+      }
+
       return { ok: res.ok, data };
     } catch (err) {
-      console.error('submitAnswer error', err);
+      if (import.meta.env.DEV) {
+        console.error('submitAnswer error', err);
+      }
       return { ok: false, message: 'Network error' };
     }
-  };
+  }, [user, displayDay, attemptsInPeriod, cooldownSeconds, COOLDOWN_THRESHOLD, COOLDOWN_TIME, BACKEND, fetchProgress, fetchQuestion]);
 
-  // Initialize: fetch progress and a recommended question in parallel
-  const initialize = async () => {
+  // Initialize: fetch progress and a recommended question
+  const initialize = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
@@ -203,7 +286,19 @@ export function usePlay(user: any) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, fetchProgress, fetchQuestion]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      if (cooldownRef.current) {
+        window.clearInterval(cooldownRef.current);
+      }
+    };
+  }, []);
 
   return {
     displayDay,

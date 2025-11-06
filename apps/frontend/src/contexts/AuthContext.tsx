@@ -44,23 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     provider.addScope('email');
     
     try {
-      console.log('Initiating Google sign-in...');
       const result = await signInWithPopup(auth, provider);
-      console.log('Google sign-in successful:', result.user?.email);
       return result;
     } catch (error: any) {
       const errorCode = error.code;
       const errorMessage = error.message;
-      const email = error.customData?.email;
-      const credential = GoogleAuthProvider.credentialFromError(error);
-      
-      console.error('Google sign-in error:', {
-        errorCode,
-        errorMessage,
-        email,
-        credential
-      });
-      
       // More specific error messages
       if (errorCode === 'auth/popup-closed-by-user') {
         throw new Error('Sign-in popup was closed before completing the sign-in process.');
@@ -80,7 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await firebaseSignOut(auth);
     } catch (error) {
-      console.error("Error signing out:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error signing out:", error);
+      }
       throw error;
     }
   };
@@ -92,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return unsubscribe;
-  }, [auth]);
+  }, []); // auth is stable, no need to include in deps
 
   const value = {
     currentUser,
