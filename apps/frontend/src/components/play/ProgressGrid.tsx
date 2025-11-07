@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 interface Day {
   day: number;
   isCompleted: boolean;
@@ -16,8 +18,9 @@ interface Props {
 /**
  * ProgressGrid - shows a compact grid of days with completion/access state.
  * Clicking an available day will call onSelectDay(day).
+ * Memoized to prevent unnecessary re-renders.
  */
-export default function ProgressGrid({ days, displayDay, onSelectDay, maxAccessibleDay }: Props) {
+const ProgressGrid = memo(function ProgressGrid({ days, displayDay, onSelectDay, maxAccessibleDay }: Props) {
   return (
     <div className="bg-card border rounded-lg p-6">
       <h3 className="text-lg font-semibold mb-4">Your Progress</h3>
@@ -46,4 +49,6 @@ export default function ProgressGrid({ days, displayDay, onSelectDay, maxAccessi
       </div>
     </div>
   );
-}
+});
+
+export default ProgressGrid;

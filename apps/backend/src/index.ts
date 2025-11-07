@@ -2,13 +2,16 @@ import express from 'express';
 import cors from 'cors';
 import admin from 'firebase-admin';
 import dotenv from 'dotenv';
+import path from 'path';
 import authRoutes from './routes/authRoutes';
 import questionRoutes from './routes/questionRoutes';
 import leaderboardRoutes from './routes/leaderboardRoutes';
 
 dotenv.config();
 
-const serviceAccount = require('../serviceAccountKey.json');
+// Use absolute path for serviceAccountKey.json to work in both dev and Docker
+const serviceAccountPath = path.join(__dirname, '..', '..', 'serviceAccountKey.json');
+const serviceAccount = require(serviceAccountPath);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),

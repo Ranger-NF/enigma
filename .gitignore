@@ -1,3 +1,14 @@
 .turbo
 node_modules
 dist
+
+# Environment variables - contain sensitive information
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Firebase credentials
+**/serviceAccountKey.json

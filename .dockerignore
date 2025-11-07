@@ -1,0 +1,70 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+**/.env*
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage/
+.nyc_output/
+**/__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+*.md
+docs/
+README.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Turborepo
+.turbo/
+
+# Misc
+tmp/
+temp/
+*.tmp
