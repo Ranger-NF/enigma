@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import admin from "firebase-admin";
 import dotenv from "dotenv";
+import path from "path";
 import authRoutes from "./routes/authRoutes";
 import questionRoutes from "./routes/questionRoutes";
 import leaderboardRoutes from "./routes/leaderboardRoutes";

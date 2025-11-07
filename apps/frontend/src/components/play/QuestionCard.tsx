@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -15,8 +15,9 @@ interface Props {
 /**
  * QuestionCard - small presentational component for showing a question
  * Keeps the PlayPage UI code tiny and focused.
+ * Memoized to prevent unnecessary re-renders.
  */
-export default function QuestionCard({
+const QuestionCard = memo(function QuestionCard({
   questionText,
   hint,
   difficulty = 1,
@@ -89,4 +90,6 @@ export default function QuestionCard({
       )}
     </div>
   );
-}
+});
+
+export default QuestionCard;

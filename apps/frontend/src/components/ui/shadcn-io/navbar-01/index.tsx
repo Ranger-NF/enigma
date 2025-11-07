@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { ModeToggle } from '@/components/mode-toggle';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import UserAvatar from '@/components/UserAvatar';
 import { signOut, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { LogOut, X } from 'lucide-react';
@@ -253,12 +253,7 @@ export const Navbar01 = React.forwardRef<HTMLDivElement, Navbar01Props>(
                           variant="ghost"
                           className="relative h-10 w-10 rounded-full p-0 hover:bg-white/10"
                         >
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={currentUser.photoURL || undefined} alt={currentUser.displayName || 'User'} />
-                            <AvatarFallback>
-                              {currentUser.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'U'}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar user={currentUser} size="sm" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="w-56" align="end" forceMount>

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: enigma-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+    volumes:
+      # Mount Firebase credentials - IMPORTANT: Set path to your actual serviceAccountKey.json
+      - ./apps/backend/serviceAccountKey.json:/app/apps/backend/serviceAccountKey.json:ro
+    restart: unless-stopped
+    networks:
+      - enigma-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        # Build-time environment variables for Vite
+        - VITE_BACKEND_SERVER_URL=${VITE_BACKEND_SERVER_URL:-http://localhost:5000}
+        - VITE_FIREBASE_API_KEY=${VITE_FIREBASE_API_KEY}
+        - VITE_FIREBASE_AUTH_DOMAIN=${VITE_FIREBASE_AUTH_DOMAIN}
+        - VITE_FIREBASE_PROJECT_ID=${VITE_FIREBASE_PROJECT_ID}
+        - VITE_FIREBASE_STORAGE_BUCKET=${VITE_FIREBASE_STORAGE_BUCKET}
+        - VITE_FIREBASE_MESSAGING_SENDER_ID=${VITE_FIREBASE_MESSAGING_SENDER_ID}
+        - VITE_FIREBASE_APP_ID=${VITE_FIREBASE_APP_ID}
+        - VITE_FIREBASE_MEASUREMENT_ID=${VITE_FIREBASE_MEASUREMENT_ID}
+    container_name: enigma-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - enigma-network
+
+networks:
+  enigma-network:
+    driver: bridge

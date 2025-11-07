@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getCurrentDay } from '../services/firestoreService';
 import { usePlay } from '../hooks/usePlay';
@@ -9,6 +9,7 @@ import ProgressGrid from '../components/play/ProgressGrid';
  * PlayPage (composed)
  * - keeps UI small and delegates logic to the `usePlay` hook
  * - enforces client-side guard: cannot open a future day (released at 00:00)
+ * - optimized with useCallback to prevent unnecessary child re-renders
  */
 function PlayPage() {
   const { currentUser } = useAuth();
@@ -27,13 +28,13 @@ function PlayPage() {
 
   useEffect(() => {
     if (currentUser) initialize();
-  }, [currentUser]);
+  }, [currentUser, initialize]);
 
-  const handleSelectDay = async (day: number) => {
+  const handleSelectDay = useCallback(async (day: number) => {
     const currentDay = getCurrentDay();
     if (day > currentDay) return; // do not allow future day selection on the client
     await fetchQuestion(day);
-  };
+  }, [fetchQuestion]);
 
   return (
     <div className="min-h-screen bg-background">
