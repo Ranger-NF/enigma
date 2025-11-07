@@ -17,13 +17,16 @@ export default function WelcomePage() {
 
 	const fetchProgressFromAPI = async () => {
 		if (!user) return;
-		
+
 		try {
 			const token = await user.getIdToken();
-			const response = await fetch("http://localhost:5000/progress", {
-				headers: { Authorization: `Bearer ${token}` },
-			});
-			
+			const response = await fetch(
+				`${import.meta.env.VITE_BACKEND_SERVER_URL || "http://localhost:5000"}/progress`,
+				{
+					headers: { Authorization: `Bearer ${token}` },
+				}
+			);
+
 			if (response.ok) {
 				const data = await response.json();
 				setCompletedDays(data.totalCompleted || 0);

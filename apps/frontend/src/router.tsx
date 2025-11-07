@@ -1,24 +1,62 @@
-// apps/frontend/src/router.tsx
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import WelcomePage from "./pages/Home";
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import HomePage from "./pages/HomePage";
 import SignInPage from "./pages/SignInPage";
 import PlayPage from "./pages/PlayPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
+import Rules from "./pages/Rules";
+import AboutUs from "@/pages/AboutUs";
 import ProtectedRoute from "./components/ProtectedRoute";
+import LandingLayout from "./components/LandingLayout";
+import { LoadingWrapper } from './components/LoadingWrapper';
 
-export default function AppRouter() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<WelcomePage />} />
-        <Route path="/signin" element={<SignInPage />} />
-        <Route element={<ProtectedRoute />}>
-          <Route path="/play" element={<PlayPage />} />
-        </Route>
-        <Route element={<ProtectedRoute />}>
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  );
+function AppRouter() {
+  const router = createBrowserRouter([
+    {
+      path: '/',
+      element: (
+        <LoadingWrapper>
+          <LandingLayout />
+        </LoadingWrapper>
+      ),
+      children: [
+        { 
+          index: true, 
+          element: <HomePage />
+        },
+        { 
+          path: '/rules', 
+          element: <Rules />,
+          handle: { noScroll: true }
+        },
+        { 
+          path: '/about-us', 
+          element: <AboutUs />
+        },
+        { 
+          path: '/signin', 
+          element: <SignInPage />
+        },
+        {
+          path: '/play',
+          element: (
+            <ProtectedRoute>
+              <PlayPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: '/leaderboard',
+          element: (
+            <ProtectedRoute>
+              <LeaderboardPage />
+            </ProtectedRoute>
+          ),
+        },
+      ],
+    },
+  ]);
+
+  return <RouterProvider router={router} />;
 }
+
+export default AppRouter;
