@@ -1,5 +1,5 @@
-import { Router, Request, Response } from 'express';
-import admin from 'firebase-admin';
+import { Router, Request, Response } from "express";
+import admin from "firebase-admin";
 
 const router = Router();
 
@@ -11,7 +11,7 @@ interface LeaderboardEntry {
   rank: number;
 }
 
-router.get('/leaderboard/:day', async (req: Request, res: Response) => {
+router.get("/leaderboard/:day", async (req: Request, res: Response) => {
   const { db } = req.app.locals;
   try {
     const day = parseInt(req.params.day);
@@ -20,10 +20,10 @@ router.get('/leaderboard/:day', async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid day number" });
     }
 
-    const usersRef = db.collection('users');
+    const usersRef = db.collection("users");
     const q = usersRef
-      .where(`completed.day${day}.done`, '==', true)
-      .orderBy(`completed.day${day}.timestamp`, 'asc')
+      .where(`completed.day${day}.done`, "==", true)
+      .orderBy(`completed.day${day}.timestamp`, "asc")
       .limit(10);
 
     const querySnapshot = await q.get();
@@ -39,19 +39,19 @@ router.get('/leaderboard/:day', async (req: Request, res: Response) => {
           name: userData.name,
           email: userData.email,
           completedAt: completedData.timestamp,
-          rank: leaderboard.length + 1
+          rank: leaderboard.length + 1,
         });
       }
     });
 
     res.json({ leaderboard, day });
   } catch (error) {
-    console.error('Error fetching leaderboard:', error);
-    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+    console.error("Error fetching leaderboard:", error);
+    res.status(500).json({ error: "Failed to fetch leaderboard" });
   }
 });
 
-router.get('/leaderboard', async (req: Request, res: Response) => {
+router.get("/leaderboard", async (req: Request, res: Response) => {
   const { getCurrentDay } = req.app.locals;
   const currentDay = getCurrentDay();
   return res.redirect(`/leaderboard/${currentDay}`);

@@ -1,16 +1,21 @@
-import express from 'express';
-import cors from 'cors';
-import admin from 'firebase-admin';
-import dotenv from 'dotenv';
-import path from 'path';
-import authRoutes from './routes/authRoutes';
-import questionRoutes from './routes/questionRoutes';
-import leaderboardRoutes from './routes/leaderboardRoutes';
+import express from "express";
+import cors from "cors";
+import admin from "firebase-admin";
+import dotenv from "dotenv";
+import path from "path";
+import authRoutes from "./routes/authRoutes";
+import questionRoutes from "./routes/questionRoutes";
+import leaderboardRoutes from "./routes/leaderboardRoutes";
 
 dotenv.config();
 
 // Use absolute path for serviceAccountKey.json to work in both dev and Docker
-const serviceAccountPath = path.join(__dirname, '..', '..', 'serviceAccountKey.json');
+const serviceAccountPath = path.join(
+  __dirname,
+  "..",
+  "..",
+  "serviceAccountKey.json",
+);
 const serviceAccount = require(serviceAccountPath);
 
 admin.initializeApp({
@@ -33,12 +38,15 @@ app.use((req, res, next) => {
 
 // Test route
 app.get("/test", (req, res) => {
-  res.json({ message: "Backend is working!", timestamp: new Date().toISOString() });
+  res.json({
+    message: "Backend is working!",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Utility function
 const getCurrentDay = (): number => {
-  const startDate = new Date('2025-09-30');
+  const startDate = new Date("2025-09-30");
   const today = new Date();
   const diffTime = today.getTime() - startDate.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
