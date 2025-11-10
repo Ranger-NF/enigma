@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLoading } from '../context/LoadingContext';
+import { useLoading } from '../contexts/LoadingContext';
 import { useLocation } from 'react-router-dom';
 import { LoadingScreen } from './ui/LoadingScreen';
 
