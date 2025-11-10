@@ -11,7 +11,7 @@ const PlayPage = lazy(() => import("./pages/PlayPage"));
 const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
 const Rules = lazy(() => import("./pages/Rules"));
 const AboutUs = lazy(() => import("@/pages/AboutUs"));
-const HowItWorks = lazy(() => import("./pages/HowItWorks")); 
+const HowItWorks = lazy(() => import("./pages/HowitWorks")); 
 
 // Fallback loader
 const PageLoader = () => (
