@@ -51,7 +51,7 @@ const Rules = () => {
   ];
 
   return (
-    <div className="h-screen w-full relative overflow-hidden bg-transparent">
+    <div className="h-screen w-full relative overflow-hidden bg-transparent pt-12">
 
       {/* Page container, no scroll */}
       <div className="relative z-10 h-full flex flex-col items-center pt-20 pb-6 px-2 overflow-hidden">
@@ -72,19 +72,21 @@ const Rules = () => {
         </p>
 
         {/* Scrollable Rules Box */}
+        <div className="relative">
+
         <div
           className={cn(
             "bg-white/6 backdrop-blur-xl rounded-2xl border border-white/15",
-            "p-6 md:p-8 space-y-10 w-full max-w-4xl",
-            "h-[65vh] overflow-y-auto",
+            "p-6 md:p-8 space-y-2 w-full max-w-4xl",
+            "h-[65vh] overflow-y-auto relative",
             "scrollbar-thin scrollbar-thumb-purple-600/40 scrollbar-track-transparent"
           )}
         >
           {rulesSections.map((section, index) => (
             <div key={index}>
-              <div className="flex items-center mb-4">
+              <div className="flex items-center">
                 <span className="text-3xl mr-3">{section.icon}</span>
-                <h2 className="text-2xl font-bold font-orbitron bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+                <h2 className="text-2xl font-bold font-orbitron text-white">
                   {section.title}
                 </h2>
               </div>
@@ -100,6 +102,7 @@ const Rules = () => {
               )}
             </div>
           ))}
+        </div>
         </div>
 
         {/* CTA */}

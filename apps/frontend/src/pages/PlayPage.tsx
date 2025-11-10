@@ -11,6 +11,7 @@ function PlayPage() {
     displayDay,
     question,
     progress,
+    loading,
     questionLoading,
     attemptsInPeriod,
     attemptsBeforeCooldown,
@@ -48,7 +49,7 @@ function PlayPage() {
             questionText={question?.question}
             hint={question?.hint}
             difficulty={question?.difficulty}
-            loading={questionLoading}
+            loading={loading}
             isCompleted={!!question?.isCompleted}
             cooldownSeconds={cooldownSeconds}
             onSubmit={(ans) => submitAnswer(ans)}

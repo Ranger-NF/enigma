@@ -16,6 +16,7 @@ interface QuestionResponse {
   isCatchUp?: boolean;
   dateLockedUntil?: string | null;
   lockReason?: string;
+  image?: string;
 }
 
 interface ProgressResponse {

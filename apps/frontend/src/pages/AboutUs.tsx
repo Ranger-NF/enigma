@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const AboutUs = () => {
   return (
-    <div className="min-h-screen w-full flex flex-col justify-center items-center md:gap-12 px-4 md:px-10 bg-transparent relative z-10">
+    <div className=" flex flex-col min-h-screen w-full  justify-center items-center gap-12 lg:gap-32 px-4 md:px-10 bg-transparent relative z-10 py-16 lg:py-40">
       {/* ENIGMA SECTION */}
       <div className="flex md:flex-row flex-col pb-10 items-center md:gap-10 md:w-[80%] md:h-[45vh]">
 
@@ -24,7 +24,7 @@ const AboutUs = () => {
             "scrollbar-thin scrollbar-thumb-purple-600/40 scrollbar-track-transparent"
           )}
         >
-          <h2 className="text-3xl font-bold mb-3">Enigma</h2>
+          <h2 className="text-3xl text-center lg:text-left font-bold mb-3">Enigma</h2>
           <p className="text-lg leading-relaxed">
             Enigma is the ultimate puzzle hunter under Invento, GEC Palakkad —
             a game where curiosity meets chaos and logic meets imagination.
@@ -41,7 +41,7 @@ const AboutUs = () => {
       </div>
 
       {/* INVENTO SECTION */}
-      <div className="flex md:flex-row flex-col items-center gap-10 md:w-[80%] md:h-[45vh]">
+      <div className="flex md:flex-row flex-col items-center gap-10 md:w-[80%] md:h-[45vh] lg:pt-44">
 
         {/* Logo */}
         <div className="w-32 md:w-48 h-full flex items-center justify-center">
@@ -59,7 +59,7 @@ const AboutUs = () => {
             "scrollbar-thin scrollbar-thumb-purple-600/40 scrollbar-track-transparent"
           )}
         >
-          <h2 className="text-3xl font-bold mb-3">Invento '26</h2>
+          <h2 className="text-3xl text-center lg:text-left  font-bold mb-3">Invento '26</h2>
           <p className="text-lg leading-relaxed">
             Invento is the annual techno-cultural fest of Government Engineering
             College, Palakkad.
