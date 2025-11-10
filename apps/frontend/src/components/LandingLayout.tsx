@@ -4,7 +4,9 @@ import { cn } from "../lib/utils";
 import { useEffect } from "react";
 import { useSwipeable } from "react-swipeable";
 import ThreeParticles from "./ThreeParticles"; // stars only on home
-import bg from "@/assets/background.png";
+import React from 'react'
+import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react'
+import * as reactSpring from '@react-spring/three'
 
 import { Navbar } from "./Navbar";
 
@@ -51,17 +53,16 @@ const routeOrder = ['/', '/how-it-works', '/rules', '/leaderboard', '/about-us',
       className={cn("min-h-screen w-full relative overflow-hidden", !isSignInPage && "bg-black")}
     >
       {/* Background shown on ALL pages */}
-      <div
-        className="fixed inset-0 w-full h-full bg-cover bg-center bg-no-repeat z-0"
+      <ShaderGradientCanvas
         style={{
-          backgroundImage: `url(${bg})`,
-          backgroundPosition: "center bottom",
-          backgroundSize: "cover",
-          opacity: 0.55, // brighter background globally
-          filter: "saturate(110%)",
+          position: 'absolute',
+          top: 0,
         }}
-      />
-
+      >
+        <ShaderGradient
+          control='query'
+ urlString="https://www.shadergradient.co/customize?animate=on&axesHelper=off&bgColor1=%23000000&bgColor2=%23000000&brightness=1&cAzimuthAngle=180&cDistance=1.8&cPolarAngle=80&cameraZoom=9.1&color1=%23606080&color2=%238d7dca&color3=%23212121&destination=onCanvas&embedMode=off&envPreset=city&format=gif&fov=40&frameRate=10&gizmoHelper=hide&grain=on&lightType=3d&pixelDensity=1.5&positionX=0&positionY=0&positionZ=0&range=enabled&rangeEnd=36.4&rangeStart=9.8&reflection=0.1&rotationX=50&rotationY=0&rotationZ=-60&shader=defaults&type=waterPlane&uAmplitude=0&uDensity=2.6&uFrequency=0&uSpeed=0.1&uStrength=0.7&uTime=9.8&wireframe=false&zoomOut=false"        />
+      </ShaderGradientCanvas>
       {/* Soft top/bottom fades so content reads clearly on every page */}
       <div className="pointer-events-none fixed inset-x-0 top-0 h-32 bg-gradient-to-b from-black/70 to-transparent z-10" />
       <div className="pointer-events-none fixed inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/70 to-transparent z-10" />

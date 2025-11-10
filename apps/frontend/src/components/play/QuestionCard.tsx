@@ -52,7 +52,7 @@ const QuestionCard = memo(function QuestionCard({
   };
 
   return (
-    <div className="bg-card border rounded-lg p-6">
+    <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Challenge</h2>
         <span className="px-3 py-1 rounded-full text-sm bg-muted">Difficulty: {difficulty}/5</span>

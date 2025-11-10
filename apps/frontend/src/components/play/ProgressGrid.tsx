@@ -22,7 +22,7 @@ interface Props {
  */
 const ProgressGrid = memo(function ProgressGrid({ days, displayDay, onSelectDay, maxAccessibleDay }: Props) {
   return (
-    <div className="bg-card border rounded-lg p-6">
+    <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg p-6">
       <h3 className="text-lg font-semibold mb-4">Your Progress</h3>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -32,9 +32,9 @@ const ProgressGrid = memo(function ProgressGrid({ days, displayDay, onSelectDay,
             <div
               key={d.day}
               className={`p-3 rounded-lg border cursor-pointer transition-all text-center text-black
-                ${d.isCompleted ? 'bg-green-50 border-green-200' : 
-                  isAvailable ? 'bg-blue-50 border-blue-200' : 
-                  'bg-gray-50 border-gray-200'} 
+                ${d.isCompleted ? 'bg-green-50 border-green-200' :
+                  isAvailable ? 'bg-blue-50 border-blue-200' :
+                  'bg-gray-50 border-gray-200'}
                 ${d.day === displayDay ? 'ring-2 ring-primary' : ''}`}
               onClick={() => isAvailable && onSelectDay(d.day)}
               title={d.reason}

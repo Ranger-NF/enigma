@@ -8,7 +8,7 @@ export function LoadingScreen({ isLoading }: LoadingScreenProps) {
   return (
     <div
       className={cn(
-        "fixed inset-0 bg-background z-50 transition-opacity duration-500 flex items-center justify-center",
+        "fixed inset-0 bg-black/50 z-50 transition-opacity duration-500 flex items-center justify-center",
         isLoading ? "opacity-100" : "opacity-0 pointer-events-none"
       )}
     >
