@@ -72,7 +72,7 @@ export default function LeaderboardPage() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="relative w-full min-h-screen pt-10 bg-transparent"
+      className="relative w-full min-h-screen pt-24 lg:pt-10 bg-transparent"
     >
       <div className="container mx-auto px-4 md:px-6 py-8">
 
@@ -161,18 +161,18 @@ export default function LeaderboardPage() {
                       {getRankIcon(entry.rank)}
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-white">
+                      <h3 className="text-sm lg:text-lg font-semibold text-white">
                         {entry.name || 'Anonymous'}
                         {currentUser && entry.id === currentUser.uid && ' (You)'}
                       </h3>
-                      <p className="text-sm text-gray-300">
+                      <p className="text-[10px] lg:text-sm text-gray-300">
                         {entry.email}
                       </p>
                     </div>
                   </div>
                   <div className="text-right text-white">
-                    <p className="text-sm text-gray-300">Completed at</p>
-                    <p className="text-lg">{formatTime(entry.completedAt)}</p>
+                    <p className="text-[12px] lg:text-sm text-gray-300">Completed at</p>
+                    <p className="text-[14px] lg:text-lg">{formatTime(entry.completedAt)}</p>
                   </div>
                 </div>
               ))}

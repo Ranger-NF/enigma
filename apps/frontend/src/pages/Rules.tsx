@@ -76,9 +76,6 @@ const Rules = () => {
           Master the challenge with these essential guidelines
         </p>
 
-        {/* Scrollable Rules Box */}
-        <div className="relative">
-
         <div
           className={cn(
             "bg-white/6 backdrop-blur-xl rounded-2xl border border-white/15",
@@ -108,20 +105,20 @@ const Rules = () => {
             </div>
           ))}
         </div>
-        </div>
-
         {/* CTA */}
-        <button
-          onClick={() => (window.location.href = "/play")}
-          className={cn(
-            "mt-6 px-8 py-3 rounded-full font-orbitron font-semibold tracking-wide",
-            "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700",
-            "text-white shadow-lg hover:shadow-purple-500/30 transition-all duration-300",
-            "transform hover:-translate-y-1"
-          )}
-        >
-          START PLAYING
-        </button>
+        <div className="md:pt-0 pt-8">
+          <button
+            onClick={() => (window.location.href = "/play")}
+            className={cn(
+              "md:mt-6 px-8 py-3 rounded-full font-orbitron font-semibold tracking-wide",
+              "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700",
+              "text-white shadow-lg hover:shadow-purple-500/30 transition-all duration-300",
+              "transform hover:-translate-y-1"
+            )}
+          >
+            START PLAYING
+          </button>
+        </div>
 
       </div>
     </motion.div>
