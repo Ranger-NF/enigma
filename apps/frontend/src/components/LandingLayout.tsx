@@ -2,6 +2,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "../lib/utils";
 
 import { useEffect } from "react";
+import MouseTrail from "./ui/MouseTrail";
 import { useSwipeable } from "react-swipeable";
 import ThreeParticles from "./ThreeParticles"; // stars only on home
 import bg from "@/assets/background.png";
@@ -68,6 +69,9 @@ const routeOrder = ['/', '/how-it-works', '/rules', '/leaderboard', '/about-us',
 
       {/* Stars ONLY on home page */}
       {isHome && <ThreeParticles />}
+      
+      {/* Mouse trail effect */}
+      <MouseTrail />
 
     {/* NAVBAR */}
       <Navbar isSignInPage={isSignInPage} />
