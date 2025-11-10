@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
-import { LoadingProvider } from './context/LoadingContext';
+import { LoadingProvider } from './contexts/LoadingContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './components/theme-provider';
 

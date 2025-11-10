@@ -1,16 +1,15 @@
 import footer1 from '@/assets/footer1.webp';
 import footer2 from '@/assets/footer2.webp';
-import { Logo } from './shadcn-io/navbar-01';
 
 const Footer: React.FC = () => {
     return (
         <div className="relative bottom-0 h-[300px] w-screen">
             <div className='relative w-full h-full'>
-                <img 
+                <img
                     src={footer1}
                     className='absolute right-0 w-[100px] bottom-0 h-[200px]'
                 />
-                <img 
+                <img
                     src={footer2}
                     className='absolute left-0 w-[150px] h-[250px]'
                 />
