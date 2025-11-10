@@ -6,14 +6,14 @@ const HeroSection = () => {
   const { currentUser } = useAuth();
 
   return (
-    <div className="relative h-screen flex items-start justify-center px-4 sm:px-6 lg:px-8 pt-20 select-none">
+    <div className="min-h-screen flex items-start justify-center px-4 sm:px-6 lg:px-8 pt-20 select-none">
 
-      <div className="max-w-5xl mx-auto text-center">
+      <div className="max-w-5xl mx-auto md:pt-0 pt-[120px] text-center">
 
         
         <h1
           className={cn(
-            "text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black",
+            "md:text-8xl text-5xl font-black",
             "text-white font-pavelt leading-[0.9] mb-4 relative tracking-[0.20em]",
             "[text-shadow:_0_0_4px_#333395,0_0_6px_#333395,0_0_8px_#333395,0_0_12px_#333395]",
             "drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]"

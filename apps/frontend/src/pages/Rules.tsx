@@ -3,40 +3,50 @@ import { cn } from "../lib/utils";
 interface RuleSection {
   title: string;
   icon: string;
-  items: string[];
+  descriptions: string;
 }
 
 const Rules = () => {
   const rulesSections: RuleSection[] = [
     {
-      title: "How to Play",
-      icon: "🎮",
-      items: [
-        "Each day, a new puzzle will be unlocked at 12:00 AM UTC",
-        "Solve the puzzle to earn points and climb the leaderboard",
-        "Use hints if you get stuck, but they may affect your score",
-        "The faster you solve, the more points you earn"
-      ]
+      title: "Verification",
+      icon: "",
+      descriptions: "Winners will have to prove they’re real humans (and real students) before collecting their glory."
     },
     {
-      title: "Scoring System",
-      icon: "🏆",
-      items: [
-        "Correct answer on first try: 100 points",
-        "Each additional attempt reduces points by 10%",
-        "Using a hint reduces points by 25%",
-        "Bonus points for solving quickly"
-      ]
+      title: "Ranking",
+      icon: "",
+      descriptions: "It’s not just about solving — it’s about how fast you solve. The quickest minds rise to the top, no second chances with time."
     },
     {
-      title: "Code of Conduct",
-      icon: "⚖️",
-      items: [
-        "One account per participant",
-        "No sharing answers with other players",
-        "Be respectful to other participants",
-        "Have fun and enjoy the challenge!"
-      ]
+      title: "Answer Format",
+      icon: "",
+      descriptions: "You’ll have to answer exactly as instructed — lowercase, uppercase, spaces, symbols — whatever the rulebook says. We’ll sort that out for you; just spell it right."
+    },
+    {
+      title: "Hints",
+      icon: "",
+      descriptions: "We might drop a few hints here and there… or maybe not. Keep an eye on the question page; surprises happen when you least expect them."
+    },
+    {
+      title: "Timer",
+      icon: "",
+      descriptions: "The second you create your account, the game begins. The clock’s been your enemy all along — you just didn’t know it."
+    },
+    {
+      title: "Fair Play",
+      icon: "",
+      descriptions: "The team holds every right to take action if things go sideways. Play clean, or watch your spot disappear like your last wrong guess."
+    },
+    {
+      title: "Use Your Tools",
+      icon: "",
+      descriptions: "Google’s your sidekick. Think like a coder, search like a detective. The answer’s always out there — somewhere between logic and luck."
+    },
+    {
+      title: "Hackers",
+      icon: "",
+      descriptions: "We see you. We like your confidence. But no — just no."
     }
   ];
 
@@ -57,7 +67,7 @@ const Rules = () => {
           GAME RULES
         </h1>
 
-        <p className="text-lg text-center text-gray-300 mb-4 font-orbitron max-w-xl">
+        <p className="text-md md:text-lg text-center text-gray-300 mb-4 font-orbitron max-w-xl">
           Master the challenge with these essential guidelines
         </p>
 
@@ -79,13 +89,10 @@ const Rules = () => {
                 </h2>
               </div>
 
-              <ul className="space-y-3 pl-4 border-l-2 border-white/10 ml-2">
-                {section.items.map((item, itemIndex) => (
-                  <li key={itemIndex} className="flex items-start">
-                    <span className="text-purple-300 mr-2">▹</span>
-                    <span className="text-gray-200">{item}</span>
-                  </li>
-                ))}
+              <ul className="space-y-2 w-full border-white/10 ml-2">
+                <div className="p-2 w-full h-[100px]">
+                  {section.descriptions}
+                </div>
               </ul>
 
               {index < rulesSections.length - 1 && (

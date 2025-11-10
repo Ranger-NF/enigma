@@ -31,7 +31,7 @@ const steps = [
 const HowItWorks = () => {
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 relative z-10">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-5xl md:pt-0 pt-6  mx-auto">
         {/* Main Title */}
         <h2 className="text-4xl md:text-5xl text-white text-center mb-6 font-pavelt font-normal tracking-wider [text-shadow:_0_0_1px_black,0_0_1px_black,0_0_1px_black,0_0_1px_black]">
           HOW IT WORKS
@@ -42,7 +42,7 @@ const HowItWorks = () => {
           <p className="text-3xl md:text-4xl font-bold text-[#E0E0FF] font-sans [text-shadow:_0_2px_4px_rgba(0,0,0,0.25)]">
             Join our 10-day treasure hunt!!
           </p>
-          <p className="text-xl text-[#C0C0FF] mt-4 font-sans font-normal">
+          <p className="text-md md:text-xl text-[#C0C0FF] mt-4 font-sans font-normal">
             One question per day, compete for the fastest completion time, and climb the daily leaderboard
           </p>
         </div>
@@ -52,7 +52,7 @@ const HowItWorks = () => {
           {/* Full section hover effect */}
           <div className="absolute inset-0 -mx-4 sm:-mx-6 lg:-mx-8 rounded-xl pointer-events-none transition-all duration-300 opacity-0 group-hover:opacity-100 group-hover:bg-gradient-to-r from-transparent via-white/5 to-transparent" />
 
-          <div className="relative grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-4 lg:gap-8 px-4">
+          <div className="relative grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 lg:gap-8 md:px-4">
             {steps.map((step, index) => (
               <div key={step.id} className="relative group">
                 {/* Curved vector path with sharp arrowhead */}
@@ -96,7 +96,7 @@ const HowItWorks = () => {
                   </div>
 
                   {/* Step Title */}
-                  <h3 className="text-lg font-bold text-white font-sans">
+                  <h3 className="text-lg text-center font-bold text-white font-sans">
                     {step.title}
                   </h3>
 
@@ -104,7 +104,7 @@ const HowItWorks = () => {
                   <div className="mt-2 text-center">
                     <p className={cn(
                       "text-sm text-white/90 font-sans font-light",
-                      "opacity-0 group-hover:opacity-100 transition-opacity duration-300",
+                      "md:opacity-0 group-hover:opacity-100 transition-opacity duration-300",
                       "max-w-[200px] mx-auto"
                     )}>
                       {step.description}

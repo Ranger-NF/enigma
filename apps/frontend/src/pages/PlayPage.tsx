@@ -31,7 +31,7 @@ function PlayPage() {
   }, [fetchQuestion]);
 
   return (
-    <div className="min-h-screen bg-transparent">
+    <div className="min-h-screen bg-transparent pt-10">
       <div className="container mx-auto px-4 md:px-6 py-8 max-w-3xl">
 
         <div className="space-y-6">

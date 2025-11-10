@@ -1,20 +1,29 @@
+import EnigmaLogo from "@/assets/logo1.png"
+import InventoLogo from"@/assets/invento.png"
+import { cn } from "@/lib/utils";
+
 const AboutUs = () => {
   return (
-    <div className="min-h-screen w-full flex flex-col justify-center items-center gap-12 px-10 bg-transparent relative z-10">
+    <div className="min-h-screen w-full flex flex-col justify-center items-center md:gap-12 px-4 md:px-10 bg-transparent relative z-10">
       {/* ENIGMA SECTION */}
-      <div className="flex items-center gap-10 w-[80%] h-[45vh]">
+      <div className="flex md:flex-row flex-col pb-10 items-center md:gap-10 md:w-[80%] md:h-[45vh]">
 
         {/* Logo */}
-        <div className="w-48 h-full flex items-center justify-center">
+        <div className="w-32 md:w-48 h-full flex pt-14 md:pt-0 items-center justify-center">
           <img
-            src="logo1.png"
+            src={EnigmaLogo}
             alt="Enigma Logo"
             className="w-full h-full object-contain"
           />
         </div>
-
-        {/* Scrollable Text Box */}
-        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 w-full h-full overflow-y-auto text-white">
+        <div
+          className={cn(
+            "bg-white/6 backdrop-blur-xl rounded-2xl border border-white/15",
+            "p-6 md:p-8 space-y-10 w-full max-w-4xl",
+            "h-[65vh] overflow-y-auto",
+            "scrollbar-thin scrollbar-thumb-purple-600/40 scrollbar-track-transparent"
+          )}
+        >
           <h2 className="text-3xl font-bold mb-3">Enigma</h2>
           <p className="text-lg leading-relaxed">
             Enigma is the ultimate puzzle hunter under Invento, GEC Palakkad —
@@ -27,23 +36,29 @@ const AboutUs = () => {
             <br /><br />
             It’s not just a quiz — it’s a journey through riddles, symbols, and creativity.
           </p>
+
         </div>
       </div>
 
       {/* INVENTO SECTION */}
-      <div className="flex items-center gap-10 w-[80%] h-[45vh]">
+      <div className="flex md:flex-row flex-col items-center gap-10 md:w-[80%] md:h-[45vh]">
 
         {/* Logo */}
-        <div className="w-48 h-full flex items-center justify-center">
+        <div className="w-32 md:w-48 h-full flex items-center justify-center">
           <img
-            src="/invento-logo.png"
+            src={InventoLogo}
             alt="Invento Logo"
             className="w-full h-full object-contain"
           />
         </div>
-
-        {/* Scrollable Text Box */}
-        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 w-full h-full overflow-y-auto text-white">
+        <div
+          className={cn(
+            "bg-white/6 backdrop-blur-xl rounded-2xl border border-white/15",
+            "p-6 md:p-8 space-y-10 w-full max-w-4xl",
+            "h-[65vh] overflow-y-auto",
+            "scrollbar-thin scrollbar-thumb-purple-600/40 scrollbar-track-transparent"
+          )}
+        >
           <h2 className="text-3xl font-bold mb-3">Invento '26</h2>
           <p className="text-lg leading-relaxed">
             Invento is the annual techno-cultural fest of Government Engineering

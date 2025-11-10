@@ -67,7 +67,7 @@ export default function LeaderboardPage() {
   };
 
   return (
-    <div className="relative w-full min-h-screen bg-transparent">
+    <div className="relative w-full min-h-screen pt-10 bg-transparent">
       <div className="container mx-auto px-4 md:px-6 py-8">
         
         {/* Header */}
