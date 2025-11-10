@@ -1,6 +1,6 @@
 {
   "apphosting": {
-    "backendId": "enigma",
+    "backendId": "enigma-backend",
     "rootDir": "/apps/backend/",
     "ignore": [
       "node_modules",
@@ -13,11 +13,7 @@
   },
   "hosting": {
     "public": "apps/frontend/dist/",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
         "source": "**",
