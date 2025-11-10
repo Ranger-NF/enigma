@@ -43,17 +43,20 @@ export function Navbar({ isSignInPage = false, className }: { isSignInPage?: boo
     { name: "Play", path: "/play" },
   ];
   return (
-    <motion.header
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      style={{
-        backdropFilter,
-        backgroundColor,
-      }}
-      className={`fixed top-5 left-0 right-0 z-50 py-4 ${className}`}>
+    <header className={cn("fixed top-5 left-0 right-0 z-50 py-4 overflow-hidden", className)}>
+      <motion.div
+        style={{
+          backdropFilter,
+          WebkitBackdropFilter: backdropFilter,
+          backgroundColor,
+          willChange: "backdrop-filter, background-color",
+        }}
+        className="absolute inset-0 z-0 bg-black/10"
+        aria-hidden
+      />
 
-      <div className="container mx-auto px-6">
+      {/* Header content sits above the animated backdrop */}
+      <div className="relative z-10 container mx-auto px-6">
         <div className="flex items-center justify-between">
 
           {/*On Desktop*/}
@@ -129,7 +132,7 @@ export function Navbar({ isSignInPage = false, className }: { isSignInPage?: boo
             {/* Slide-in sidebar */}
             <div
               className={cn(
-                "fixed inset-y-0 left-0 w-72 bg-white/20 shadow-xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto pt-6",
+                "fixed inset-y-0 left-0 w-full  bg-black/100 shadow-xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto pt-6",
                 open ? "translate-x-0" : "-translate-x-full"
               )}
             >
@@ -210,6 +213,6 @@ export function Navbar({ isSignInPage = false, className }: { isSignInPage?: boo
           </div>
         </div>
       </div>
-    </motion.header>
+    </header>
   )
 }
