@@ -1,195 +1,30 @@
 import { Router, Request, Response } from "express";
 import admin from "firebase-admin";
+
 import authMiddleware from "../../middleware/authMiddleware";
+import { QuestionData } from "../types/questionTypes";
+import {
+  getCooldownInfo,
+  isQuestionUnlockedByDate,
+  isDayCompleted,
+  checkSerialProgression,
+  validateAnswer,
+} from "../utilities/questionRouteHelpers";
 
 const router = Router();
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
 const WRONG_COOLDOWN_SECONDS = 30;
-const MAX_ATTEMPTS_BEFORE_COOLDOWN = 10;
+export const MAX_ATTEMPTS_BEFORE_COOLDOWN = 10;
 const TOTAL_DAYS = 10;
 
-// ============================================================================
-// INTERFACES
-// ============================================================================
-interface QuestionData {
-  id: string;
-  day: number;
-  text: string;
-  answer: string;
-  hint: string;
-  difficulty: number;
-  image?: string;
-  unlockDate: admin.firestore.Timestamp;
-}
-
-interface UserData {
-  completed?: Record<string, any>;
-  attempts?: Record<string, any>;
-}
-
-interface CooldownInfo {
-  isInCooldown: boolean;
-  remainingSeconds: number;
-  attemptsInPeriod: number;
-}
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-/**
- * Safely read nested fields from an object
- */
-const getNested = (obj: any, path: string, fallback: any) => {
-  return (
-    path
-      .split(".")
-      .reduce(
-        (acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined),
-        obj,
-      ) ?? fallback
-  );
-};
-
-/**
- * Check if question is unlocked based on date
- */
-const isQuestionUnlockedByDate = (unlockDate: admin.firestore.Timestamp): boolean => {
-  const now = new Date();
-  const unlockDateTime = unlockDate.toDate();
-  return now >= unlockDateTime;
-};
-
-/**
- * Get cooldown information for a user on a specific day
- */
-const getCooldownInfo = async (
-  userData: UserData,
-  userRef: admin.firestore.DocumentReference,
-  day: number
-): Promise<CooldownInfo> => {
-  let attemptsInPeriod = Number(
-    getNested(userData, `attempts.day${day}.attemptsInCooldownPeriod`, 0)
-  );
-
-  const cooldownUntil = getNested(userData, `attempts.day${day}.cooldownUntil`, null);
-
-  if (!cooldownUntil || !cooldownUntil.toDate) {
-    return {
-      isInCooldown: false,
-      remainingSeconds: 0,
-      attemptsInPeriod,
-    };
-  }
-
-  const now = new Date();
-  const remainingMs = cooldownUntil.toDate().getTime() - now.getTime();
-  const remainingSeconds = Math.ceil(remainingMs / 1000);
-
-  if (remainingSeconds > 0) {
-    return {
-      isInCooldown: true,
-      remainingSeconds,
-      attemptsInPeriod,
-    };
-  }
-
-  // Cooldown has expired - reset the counter
-  if (attemptsInPeriod >= MAX_ATTEMPTS_BEFORE_COOLDOWN) {
-    attemptsInPeriod = 0;
-    await userRef.set(
-      {
-        attempts: {
-          [`day${day}`]: {
-            attemptsInCooldownPeriod: 0,
-            cooldownUntil: admin.firestore.FieldValue.delete(),
-          },
-        },
-      },
-      { merge: true }
-    );
-  }
-
-  return {
-    isInCooldown: false,
-    remainingSeconds: 0,
-    attemptsInPeriod,
-  };
-};
-
-/**
- * Check if user has completed a specific day
- */
-const isDayCompleted = (userData: UserData, day: number): boolean => {
-  return !!getNested(userData, `completed.day${day}.done`, false);
-};
-
-/**
- * Check serial progression and determine if day is accessible
- */
-const checkSerialProgression = (
-  currentDay: number,
-  requestedDay: number | null,
-  userData: UserData,
-  getCurrentDay: () => number
-): { isUnlocked: boolean; lockReason: string; isCatchUp: boolean } => {
-  if (currentDay === 1) {
-    return { isUnlocked: true, lockReason: "", isCatchUp: false };
-  }
-
-  const previousDayCompleted = isDayCompleted(userData, currentDay - 1);
-
-  if (previousDayCompleted) {
-    return { isUnlocked: true, lockReason: "", isCatchUp: false };
-  }
-
-  // Handle catch-up mode
-  if (requestedDay) {
-    const isPreviousDay = requestedDay < getCurrentDay();
-    const isCurrentDay = requestedDay === getCurrentDay();
-
-    if (isPreviousDay || isCurrentDay) {
-      return {
-        isUnlocked: true,
-        lockReason: `Catch-up mode: Complete Day ${currentDay - 1} first for proper sequence`,
-        isCatchUp: true,
-      };
-    }
-  }
-
-  return {
-    isUnlocked: false,
-    lockReason: `Complete Day ${currentDay - 1} to unlock this question`,
-    isCatchUp: false,
-  };
-};
-
-/**
- * Validate answer submission
- */
-const validateAnswer = (userAnswer: string, correctAnswer: string): boolean => {
-  return (
-    String(userAnswer).trim().toLowerCase() ===
-    String(correctAnswer).trim().toLowerCase()
-  );
-};
-
-// ============================================================================
-// ROUTE HANDLERS
-// ============================================================================
-
-/**
- * GET /play - Fetch question for the current or requested day
- */
 router.get("/play", authMiddleware, async (req: Request, res: Response) => {
   const { db, getCurrentDay } = req.app.locals;
 
   try {
     // Parse requested day or use current day
-    const requestedDay = req.query.day ? parseInt(req.query.day as string) : null;
+    const requestedDay = req.query.day
+      ? parseInt(req.query.day as string)
+      : null;
     const currentDay = requestedDay || getCurrentDay();
 
     // Fetch question document
@@ -231,7 +66,12 @@ router.get("/play", authMiddleware, async (req: Request, res: Response) => {
     const userData = userDoc.exists ? userDoc.data() || {} : {};
 
     // Check serial progression
-    const progression = checkSerialProgression(currentDay, requestedDay, userData, getCurrentDay);
+    const progression = checkSerialProgression(
+      currentDay,
+      requestedDay,
+      userData,
+      getCurrentDay,
+    );
 
     // Check completion status
     const completedForDay = isDayCompleted(userData, currentDay);
@@ -251,7 +91,10 @@ router.get("/play", authMiddleware, async (req: Request, res: Response) => {
       isCompleted: completedForDay,
       cooldownSeconds: cooldownInfo.remainingSeconds,
       attemptsInPeriod: cooldownInfo.attemptsInPeriod,
-      attemptsBeforeCooldown: Math.max(0, MAX_ATTEMPTS_BEFORE_COOLDOWN - cooldownInfo.attemptsInPeriod),
+      attemptsBeforeCooldown: Math.max(
+        0,
+        MAX_ATTEMPTS_BEFORE_COOLDOWN - cooldownInfo.attemptsInPeriod,
+      ),
       // Serial progression
       isUnlocked: progression.isUnlocked,
       lockReason: progression.lockReason,
@@ -309,9 +152,12 @@ router.get("/progress", authMiddleware, async (req: Request, res: Response) => {
 
       if (!isDateUnlocked) {
         isAccessible = false;
-        reason = `Unlocks ${questionDoc.exists ?
-          (questionDoc.data() as QuestionData).unlockDate.toDate().toLocaleDateString() :
-          'soon'
+        reason = `Unlocks ${
+          questionDoc.exists
+            ? (questionDoc.data() as QuestionData).unlockDate
+                .toDate()
+                .toLocaleDateString()
+            : "soon"
         }`;
       } else if (day > 1 && !isDayCompleted(userData, day - 1)) {
         isAccessible = false;
@@ -329,14 +175,19 @@ router.get("/progress", authMiddleware, async (req: Request, res: Response) => {
     });
 
     // Calculate summary statistics
-    const nextAvailableDay = progress.find(p => !p.isCompleted && p.isAccessible)?.day || null;
-    const allQuestionsComplete = progress.every(p => p.isCompleted || !p.isAccessible);
-    const hasIncompleteAccessible = progress.some(p => !p.isCompleted && p.isAccessible);
+    const nextAvailableDay =
+      progress.find((p) => !p.isCompleted && p.isAccessible)?.day || null;
+    const allQuestionsComplete = progress.every(
+      (p) => p.isCompleted || !p.isAccessible,
+    );
+    const hasIncompleteAccessible = progress.some(
+      (p) => !p.isCompleted && p.isAccessible,
+    );
 
     res.json({
       currentDay,
       progress,
-      totalCompleted: progress.filter(p => p.isCompleted).length,
+      totalCompleted: progress.filter((p) => p.isCompleted).length,
       totalDays: TOTAL_DAYS,
       nextAvailableDay,
       allQuestionsComplete,
@@ -370,7 +221,9 @@ router.post(
       const questionDoc = await questionRef.get();
 
       if (!questionDoc.exists) {
-        return res.status(400).json({ result: "Question not found for this day" });
+        return res
+          .status(400)
+          .json({ result: "Question not found for this day" });
       }
 
       const questionData = questionDoc.data() as QuestionData;
@@ -421,7 +274,10 @@ router.post(
           correct: false,
           cooldownSeconds: cooldownInfo.remainingSeconds,
           attemptsInPeriod: cooldownInfo.attemptsInPeriod,
-          attemptsBeforeCooldown: Math.max(0, MAX_ATTEMPTS_BEFORE_COOLDOWN - cooldownInfo.attemptsInPeriod),
+          attemptsBeforeCooldown: Math.max(
+            0,
+            MAX_ATTEMPTS_BEFORE_COOLDOWN - cooldownInfo.attemptsInPeriod,
+          ),
         });
       }
 
@@ -439,7 +295,7 @@ router.post(
               },
             },
           },
-          { merge: true }
+          { merge: true },
         );
 
         return res.json({
@@ -453,11 +309,16 @@ router.post(
         const newAttemptsInPeriod = cooldownInfo.attemptsInPeriod + 1;
 
         // Determine if cooldown should be triggered
-        const shouldTriggerCooldown = newAttemptsInPeriod >= MAX_ATTEMPTS_BEFORE_COOLDOWN;
+        const shouldTriggerCooldown =
+          newAttemptsInPeriod >= MAX_ATTEMPTS_BEFORE_COOLDOWN;
         const cooldownUntilTs = shouldTriggerCooldown
-          ? admin.firestore.Timestamp.fromMillis(now.toMillis() + WRONG_COOLDOWN_SECONDS * 1000)
+          ? admin.firestore.Timestamp.fromMillis(
+              now.toMillis() + WRONG_COOLDOWN_SECONDS * 1000,
+            )
           : null;
-        const cooldownSecondsToReturn = shouldTriggerCooldown ? WRONG_COOLDOWN_SECONDS : 0;
+        const cooldownSecondsToReturn = shouldTriggerCooldown
+          ? WRONG_COOLDOWN_SECONDS
+          : 0;
 
         // Update database
         const updateData: any = {
@@ -475,7 +336,10 @@ router.post(
         await userRef.set(updateData, { merge: true });
 
         // Build response
-        const attemptsBeforeCooldown = Math.max(0, MAX_ATTEMPTS_BEFORE_COOLDOWN - newAttemptsInPeriod);
+        const attemptsBeforeCooldown = Math.max(
+          0,
+          MAX_ATTEMPTS_BEFORE_COOLDOWN - newAttemptsInPeriod,
+        );
         const resultMessage = shouldTriggerCooldown
           ? `Incorrect answer. You've used ${newAttemptsInPeriod} attempts. Please wait ${cooldownSecondsToReturn}s before trying again.`
           : `Incorrect answer. ${attemptsBeforeCooldown} attempts left before cooldown.`;
@@ -492,7 +356,7 @@ router.post(
       console.error("Error validating answer:", error);
       res.status(500).json({ result: "Error validating answer" });
     }
-  }
+  },
 );
 
 export default router;

@@ -16,7 +16,8 @@ if (process.env.SERVICE_ACCOUNT_JSON) {
   serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_JSON);
 } else {
   // Local development
-  serviceAccount = require("../serviceAccountKey.json");
+  const serviceAccountPath = path.join(__dirname, "..", "serviceAccountKey.json");
+  serviceAccount = require(serviceAccountPath);
 }
 
 admin.initializeApp({
