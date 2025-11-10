@@ -35,10 +35,9 @@ export default function SignInPage() {
   };
 
   return (
-    <LandingLayout>
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <div className="flex items-center justify-center min-h-screen p-4">
         <div className="w-full max-w-md p-8 rounded-2xl bg-gradient-to-br from-gray-900 to-black border border-white/10 shadow-2xl">
-        <div className="text-center mb-10">
+        <div className="text-center">
           <h1 className="text-4xl font-bold text-white mb-2 font-orbitron">Welcome Back</h1>
           <p className="text-gray-400">Sign in to continue to ENIGMA</p>
           {error && (
@@ -96,63 +95,8 @@ export default function SignInPage() {
               </>
             )}
           </Button>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-900 text-gray-400">Or continue with email</span>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
-                Email address
-              </label>
-              <input
-                type="email"
-                id="email"
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="you@example.com"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300">
-                  Password
-                </label>
-                <a href="#" className="text-sm text-blue-400 hover:text-blue-300">
-                  Forgot password?
-                </a>
-              </div>
-              <input
-                type="password"
-                id="password"
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-              />
-            </div>
-
-            <Button
-              className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-[1.02]"
-              disabled={isLoading}
-            >
-              Sign in
-            </Button>
-          </div>
         </div>
-
-        <p className="mt-6 text-center text-sm text-gray-400">
-          Don't have an account?{' '}
-          <a href="#" className="text-blue-400 hover:text-blue-300 font-medium">
-            Sign up
-          </a>
-        </p>
       </div>
     </div>
-  </LandingLayout>
 );
 }
