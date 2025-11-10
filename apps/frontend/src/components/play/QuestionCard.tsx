@@ -10,6 +10,7 @@ interface Props {
   isCompleted?: boolean;
   cooldownSeconds: number;
   onSubmit: (answer: string) => Promise<any>;
+  questionImage?: string;
 }
 
 /**
@@ -25,6 +26,7 @@ const QuestionCard = memo(function QuestionCard({
   isCompleted,
   cooldownSeconds,
   onSubmit,
+  questionImage
 }: Props) {
   const [answer, setAnswer] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -60,6 +62,10 @@ const QuestionCard = memo(function QuestionCard({
         <div className="text-center py-8">Loading question...</div>
       ) : (
         <>
+          <div className='flex justify-center p-3'>
+
+            {questionImage && <img src={questionImage} />}
+          </div>
           <p className="text-lg mb-2">{questionText || 'No question available yet.'}</p>
           <p className="text-sm text-muted-foreground mb-4">Hint: {hint || '—'}</p>
 

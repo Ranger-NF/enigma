@@ -48,6 +48,7 @@ function PlayPage() {
           </div>
 
           <QuestionCard
+          questionImage={question?.image}
             questionText={question?.question}
             hint={question?.hint}
             difficulty={question?.difficulty}
