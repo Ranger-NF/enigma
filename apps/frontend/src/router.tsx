@@ -4,18 +4,19 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LandingLayout from "./components/LandingLayout";
 import { LoadingWrapper } from './components/LoadingWrapper';
 
-// Lazy load pages for code splitting and improved initial load time
+// Lazy loaded pages
 const HomePage = lazy(() => import("./pages/HomePage"));
 const SignInPage = lazy(() => import("./pages/SignInPage"));
 const PlayPage = lazy(() => import("./pages/PlayPage"));
 const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
 const Rules = lazy(() => import("./pages/Rules"));
 const AboutUs = lazy(() => import("@/pages/AboutUs"));
+const HowItWorks = lazy(() => import("./pages/HowItWorks")); 
 
-// Loading fallback component
+// Fallback loader
 const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="text-center">Loading...</div>
+  <div className="flex items-center justify-center min-h-screen text-white">
+    Loading...
   </div>
 );
 
@@ -29,14 +30,27 @@ function AppRouter() {
         </LoadingWrapper>
       ),
       children: [
+        // HOME
         {
           index: true,
           element: (
             <Suspense fallback={<PageLoader />}>
               <HomePage />
             </Suspense>
-          )
+          ),
         },
+
+        // ✅ NEW HOW IT WORKS PAGE
+        {
+          path: '/how-it-works',
+          element: (
+            <Suspense fallback={<PageLoader />}>
+              <HowItWorks />
+            </Suspense>
+          ),
+        },
+
+        // RULES
         {
           path: '/rules',
           element: (
@@ -46,6 +60,8 @@ function AppRouter() {
           ),
           handle: { noScroll: true }
         },
+
+        // ABOUT
         {
           path: '/about-us',
           element: (
@@ -54,6 +70,8 @@ function AppRouter() {
             </Suspense>
           )
         },
+
+        // SIGN IN
         {
           path: '/signin',
           element: (
@@ -62,6 +80,8 @@ function AppRouter() {
             </Suspense>
           )
         },
+
+        // PLAY (Protected)
         {
           path: '/play',
           element: (
@@ -72,6 +92,8 @@ function AppRouter() {
             </ProtectedRoute>
           ),
         },
+
+        // LEADERBOARD (Protected)
         {
           path: '/leaderboard',
           element: (
