@@ -156,7 +156,7 @@ export default function ThreeParticles() {
   return (
     <div
       ref={mountRef}
-      className="pointer-events-none absolute inset-0 z-[5]"
+      className="pointer-events-none absolute  h-full w-full inset-0 z-[5]"
       style={{ mixBlendMode: "screen" }}
     />
   );
