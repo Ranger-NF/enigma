@@ -11,22 +11,21 @@ import { Link, useNavigate } from "react-router-dom";
 import { cn } from "../lib/utils";
 
 import { useAuth } from "../contexts/AuthContext";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+
 
 export function Navbar({ isSignInPage = false, className }: { isSignInPage?: boolean, className?: String }) {
     const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { currentUser, signOut } = useAuth();
 
-  const [scrolled, setScrolled] = useState(false);
+  const { scrollY } = useScroll();
+  const bgOpacity = useTransform(scrollY, [0, 50], [0, 0.2]);
+  const blurValue = useTransform(scrollY, [0, 50], [0, 10]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const backgroundColor = useTransform(bgOpacity, (v) => `rgba(0, 0, 0, ${v})`);
+  const backdropFilter = useTransform(blurValue, (v) => `blur(${v}px)`);
 
   const handleLogout = async () => {
     try {
@@ -44,11 +43,15 @@ export function Navbar({ isSignInPage = false, className }: { isSignInPage?: boo
     { name: "Play", path: "/play" },
   ];
   return (
-    <header className={`fixed top-5 left-0 right-0 z-50 py-4 duration-300 ${
-           scrolled
-             ? "backdrop-blur-lg bg-black/5"
-             : "bg-transparent"
-         } ${className}`}>
+    <motion.header
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      style={{
+        backdropFilter,
+        backgroundColor,
+      }}
+      className={`fixed top-5 left-0 right-0 z-50 py-4 ${className}`}>
 
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between">
@@ -56,17 +59,34 @@ export function Navbar({ isSignInPage = false, className }: { isSignInPage?: boo
           {/*On Desktop*/}
           <Link to="/" className="hidden lg:flex items-center">
             <div className="flex items-center space-x-2">
-              <img
+              <motion.img
                 src={Logo}
                 alt="Enigma Logo"
                 className="h-14 w-auto object-contain mix-blend-screen brightness-[1.3] select-none"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
               />
             </div>
           </Link>
 
           {/*On Desktop*/}
-          <nav className="hidden lg:flex items-center space-x-24 bg-white/5 border border-white/50 px-12 py-4 rounded-full">
+          <motion.nav
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: { staggerChildren: 0.1 },
+              },
+            }}
+            className="hidden lg:flex items-center space-x-24 bg-white/5 border border-white/50 px-12 py-4 rounded-full">
             {navItems.map((item) => (
+            <motion.div
+              key={item.name}
+              variants={{ hidden: { opacity: 0, y: -5 }, visible: { opacity: 1, y: 0 } }}
+            >
               <Link
                 key={item.name}
                 to={item.path}
@@ -83,8 +103,9 @@ export function Navbar({ isSignInPage = false, className }: { isSignInPage?: boo
                   )}
                 />
               </Link>
+            </motion.div>
             ))}
-          </nav>
+          </motion.nav>
 
           {/*On Mobile*/}
           <div className="lg:hidden">
@@ -136,7 +157,6 @@ export function Navbar({ isSignInPage = false, className }: { isSignInPage?: boo
                     onClick={() => setOpen(false)}
                     className={cn(
                       "px-6 py-4 text-white font-medium flex justify-between items-center border-b hover:bg-white hover:text-black transition-colors",
-                      location.pathname === item.path && "text-blue-600"
                     )}
                   >
                     {item.name}
@@ -190,6 +210,6 @@ export function Navbar({ isSignInPage = false, className }: { isSignInPage?: boo
           </div>
         </div>
       </div>
-    </header>
+    </motion.header>
   )
 }

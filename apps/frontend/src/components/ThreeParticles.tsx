@@ -83,27 +83,6 @@ export default function ThreeParticles() {
 
     const points = new THREE.Points(geometry, material);
     scene.add(points);
-
-    // 🌠 SHOOTING STAR
-    const trailGeo = new THREE.CylinderGeometry(0.002, 0.04, 1.6, 8, 1, true);
-    const trailMat = new THREE.MeshBasicMaterial({
-      color: new THREE.Color("#b38aff"),
-      transparent: true,
-      opacity: 0.7,
-    });
-    const meteor = new THREE.Mesh(trailGeo, trailMat);
-    meteor.rotation.z = Math.PI / 2;
-    meteor.visible = false;
-    scene.add(meteor);
-
-    function launchMeteor() {
-      meteor.visible = true;
-      meteor.position.set(4, Math.random() * 2 - 1, -3);
-      meteor.rotation.y = Math.random() * Math.PI * 2;
-    }
-
-    const meteorTimer = setInterval(() => launchMeteor(), 4000 + Math.random() * 4000);
-
     // Mouse Parallax
     window.addEventListener("mousemove", (e) => {
       mouse.current.x = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -121,14 +100,6 @@ export default function ThreeParticles() {
       camera.position.x += (mouse.current.x * 0.6 - camera.position.x) * 0.03;
       camera.position.y += (-mouse.current.y * 0.4 - camera.position.y) * 0.03;
 
-      // Meteor movement
-      if (meteor.visible) {
-        meteor.position.x -= 0.065;
-        meteor.position.y -= 0.015;
-        meteor.position.z += 0.02;
-        if (meteor.position.x < -4) meteor.visible = false;
-      }
-
       renderer.render(scene, camera);
       rafRef.current = requestAnimationFrame(animate);
     };
@@ -143,7 +114,6 @@ export default function ThreeParticles() {
     resizeObserver.observe(mount);
 
     return () => {
-      clearInterval(meteorTimer);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       resizeObserver.disconnect();
       geometry.dispose();
@@ -156,7 +126,7 @@ export default function ThreeParticles() {
   return (
     <div
       ref={mountRef}
-      className="pointer-events-none absolute inset-0 z-[5]"
+      className="pointer-events-none absolute  h-full w-full inset-0 z-[5]"
       style={{ mixBlendMode: "screen" }}
     />
   );

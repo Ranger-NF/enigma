@@ -25,9 +25,8 @@ function AppRouter() {
     {
       path: '/',
       element: (
-        <LoadingWrapper>
+
           <LandingLayout />
-        </LoadingWrapper>
       ),
       children: [
         // HOME

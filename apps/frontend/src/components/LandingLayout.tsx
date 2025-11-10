@@ -17,38 +17,11 @@ interface LandingLayoutProps {
 
 const LandingLayout = ({ children, isSignInPage = false }: LandingLayoutProps) => {
   const location = useLocation();
-  const navigate = useNavigate();
-
-const routeOrder = ['/', '/how-it-works', '/rules', '/leaderboard', '/about-us', '/play'];
-
-  const currentIndex = routeOrder.indexOf(location.pathname);
-
-  const handlers = useSwipeable({
-    onSwipedLeft: () => {
-      if (currentIndex < routeOrder.length - 1) navigate(routeOrder[currentIndex + 1]);
-    },
-    onSwipedRight: () => {
-      if (currentIndex > 0) navigate(routeOrder[currentIndex - 1]);
-    },
-    trackMouse: true,
-  });
-
-  useEffect(() => {
-    if (location.pathname === "/") {
-      const timer = setTimeout(() => {
-        if (currentIndex < routeOrder.length - 1) navigate(routeOrder[currentIndex + 1]);
-      }, 15000);
-      return () => clearTimeout(timer);
-    }
-  }, [location.pathname, currentIndex, navigate]);
-
-
 
   const isHome = location.pathname === "/";
 
   return (
     <div
-      {...handlers}
       className={cn("min-h-screen w-full relative overflow-hidden", !isSignInPage && "bg-black")}
     >
       {/* Background shown on ALL pages */}
