@@ -136,7 +136,6 @@ export function Navbar({ isSignInPage = false, className }: { isSignInPage?: boo
                     onClick={() => setOpen(false)}
                     className={cn(
                       "px-6 py-4 text-white font-medium flex justify-between items-center border-b hover:bg-white hover:text-black transition-colors",
-                      location.pathname === item.path && "text-blue-600"
                     )}
                   >
                     {item.name}
