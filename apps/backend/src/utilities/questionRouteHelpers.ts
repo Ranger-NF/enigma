@@ -1,5 +1,6 @@
 import admin from "firebase-admin";
 import { UserData, CooldownInfo } from "../types/questionTypes";
+import { MAX_ATTEMPTS_BEFORE_COOLDOWN } from "../routes/questionRoutes";
 
 /**
  * Safely read nested fields from an object

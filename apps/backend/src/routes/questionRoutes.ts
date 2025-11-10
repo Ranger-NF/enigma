@@ -14,7 +14,7 @@ import {
 const router = Router();
 
 const WRONG_COOLDOWN_SECONDS = 30;
-const MAX_ATTEMPTS_BEFORE_COOLDOWN = 10;
+export const MAX_ATTEMPTS_BEFORE_COOLDOWN = 10;
 const TOTAL_DAYS = 10;
 
 router.get("/play", authMiddleware, async (req: Request, res: Response) => {

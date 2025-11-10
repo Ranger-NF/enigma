@@ -10,12 +10,7 @@ import leaderboardRoutes from "./routes/leaderboardRoutes";
 dotenv.config();
 
 // Use absolute path for serviceAccountKey.json to work in both dev and Docker
-const serviceAccountPath = path.join(
-  __dirname,
-  "..",
-  "..",
-  "serviceAccountKey.json",
-);
+const serviceAccountPath = path.join(__dirname, "..", "serviceAccountKey.json");
 const serviceAccount = require(serviceAccountPath);
 
 admin.initializeApp({
