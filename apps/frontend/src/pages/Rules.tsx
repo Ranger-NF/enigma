@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { cn } from "../lib/utils";
 
 interface RuleSection {
@@ -51,7 +52,11 @@ const Rules = () => {
   ];
 
   return (
-    <div className="h-screen w-full relative overflow-hidden bg-transparent pt-12">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="h-screen w-full relative overflow-hidden bg-transparent pt-12">
 
       {/* Page container, no scroll */}
       <div className="relative z-10 h-full flex flex-col items-center pt-20 pb-6 px-2 overflow-hidden">
@@ -119,7 +124,7 @@ const Rules = () => {
         </button>
 
       </div>
-    </div>
+    </motion.div>
   );
 };
 

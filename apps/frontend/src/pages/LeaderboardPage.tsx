@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { getCurrentDay, getDailyLeaderboard } from "../services/firestoreService";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 interface LeaderboardEntry {
   id: string;
@@ -31,7 +32,7 @@ export default function LeaderboardPage() {
     try {
       const data = await getDailyLeaderboard(day, 20);
       setLeaderboard(data);
-      
+
       if (currentUser) {
         const userEntry = data.find(entry => entry.id === currentUser.uid);
         setUserRank(userEntry ? userEntry.rank : null);
@@ -67,9 +68,14 @@ export default function LeaderboardPage() {
   };
 
   return (
-    <div className="relative w-full min-h-screen pt-10 bg-transparent">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="relative w-full min-h-screen pt-10 bg-transparent"
+    >
       <div className="container mx-auto px-4 md:px-6 py-8">
-        
+
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">
@@ -174,6 +180,6 @@ export default function LeaderboardPage() {
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

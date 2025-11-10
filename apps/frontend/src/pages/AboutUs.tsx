@@ -1,10 +1,16 @@
 import EnigmaLogo from "@/assets/logo1.png"
 import InventoLogo from"@/assets/invento.png"
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 const AboutUs = () => {
   return (
-    <div className=" flex flex-col min-h-screen w-full  justify-center items-center gap-12 lg:gap-32 px-4 md:px-10 bg-transparent relative z-10 py-16 lg:py-40">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className=" flex flex-col min-h-screen w-full  justify-center items-center gap-12 lg:gap-32 px-4 md:px-10 bg-transparent relative z-10 py-16 lg:py-40"
+    >
       {/* ENIGMA SECTION */}
       <div className="flex md:flex-row flex-col pb-10 items-center md:gap-10 md:w-[80%] md:h-[45vh]">
 
@@ -74,7 +80,7 @@ const AboutUs = () => {
           </p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
