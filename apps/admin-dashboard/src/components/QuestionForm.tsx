@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, X } from 'lucide-react';
-import { getQuestion, createQuestion, updateQuestion, uploadQuestionImage } from '../lib/firestoreService';
+import { getQuestion, createQuestion, updateQuestion, uploadQuestionImage, deleteQuestionImage } from '../lib/firestoreService';
 import { Timestamp } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
@@ -82,18 +82,29 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ editingDay, onSuccess, onCa
         imageUrl = await uploadQuestionImage(image, day);
       }
 
-      const questionData = {
+      const questionData: any = {
         day,
         text: questionText,
         hint,
         answer,
         difficulty,
-        image: imageUrl || undefined,
         unlockDate: Timestamp.fromDate(new Date(unlockDate)),
       };
 
+      if (imageUrl) {
+        questionData.image = imageUrl; // only include if non-empty
+      } else if (!image && !imagePreview) {
+        // explicitly delete the image from Firestore
+        questionData.image = null;
+      }
+
+
       if (editingDay) {
         await updateQuestion(day, questionData);
+
+        if (!image && !imagePreview) {
+          await deleteQuestionImage(day);
+        }
       } else {
         await createQuestion(day, questionData);
       }
