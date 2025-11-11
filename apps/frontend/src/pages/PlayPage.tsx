@@ -80,9 +80,12 @@ function PlayPage() {
 
         <div className="space-y-6">
           <DayProgress day={displayDay} totalDays={10} setIsOpen={setIsOpen}/>
-          <div className='flex flex-col lg:flex-row items-center'>
-            <div className='flex gap-4 w-auto h-[350px] items-center justify-center'>
-              <div className='w-[260px] h-[260px] md:h-full md:w-[520px] bg-black rounded-lg'>
+          <div className='flex flex-col lg:flex-row items-center '>
+
+
+            <div className='flex flex-col lg:flex-row gap-4 w-auto lg:h-[350px] items-center justify-center'>
+              {/*Image area*/}
+              <div className='w-full h-[30vh] lg:h-full lg:w-[520px] bg-black rounded-lg'>
 
                 {/* Spinner while image loads */}
                 <div className="relative w-full h-full flex items-center justify-center">
@@ -107,10 +110,10 @@ function PlayPage() {
                     setImageLoaded={setImageLoaded}
                   />
                 </div>
-
               </div>
-              <div className='flex flex-col w-[500px] h-4xl justify-center items-center'>
 
+              {/*Answer Area*/}
+              <div className='flex flex-col lg:w-[500px] h-4xl justify-center items-center'>
                 {question?.isCompleted ? (
                   <div >
                     <div>{question?.question}</div>
