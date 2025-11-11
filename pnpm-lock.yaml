@@ -57,6 +57,9 @@ importers:
       '@radix-ui/react-slot':
         specifier: ^1.2.3
         version: 1.2.3(@types/react@19.1.13)(react@19.1.1)
+      '@types/three':
+        specifier: ^0.181.0
+        version: 0.181.0
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
