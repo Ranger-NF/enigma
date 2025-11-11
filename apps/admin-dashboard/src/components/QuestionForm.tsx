@@ -19,7 +19,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ editingDay, onSuccess, onCa
   const [difficulty, setDifficulty] = useState(3);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
-  const [unlockDate, setUnlockDate] = useState('2025-10-01');
+  const [unlockDate, setUnlockDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     if (editingDay) {
@@ -80,6 +80,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ editingDay, onSuccess, onCa
       // Upload image if new one selected
       if (image) {
         imageUrl = await uploadQuestionImage(image, day);
+      } else {
+        toast.error('Please upload the image (Mandatory)');
       }
 
       const questionData = {
@@ -118,14 +120,14 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ editingDay, onSuccess, onCa
           {/* Day Selection */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              Day (1-10)
+              Day No. (1-30)
             </label>
             <input
               type="number"
               min="1"
               max="10"
               value={day}
-              onChange={(e) => setDay(Math.min(10, Math.max(1, parseInt(e.target.value))))}
+              onChange={(e) => setDay(Math.min(30, Math.max(1, parseInt(e.target.value))))}
               disabled={!!editingDay}
               className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded text-white disabled:opacity-50"
             />
@@ -193,7 +195,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ editingDay, onSuccess, onCa
         {/* Image Upload */}
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-2">
-            Question Image (Optional)
+            Question Image *
           </label>
           <div className="flex items-center gap-4">
             <label className="flex-1 flex items-center justify-center px-4 py-3 border-2 border-dashed border-slate-600 rounded cursor-pointer hover:border-blue-500 transition">
@@ -233,7 +235,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ editingDay, onSuccess, onCa
         {/* Unlock Date */}
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-2">
-            Unlock Date
+            Unlock Date *
           </label>
           <input
             type="date"
