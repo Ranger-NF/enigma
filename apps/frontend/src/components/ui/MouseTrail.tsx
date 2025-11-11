@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const MouseTrail = () => {
   const trailRef = useRef<HTMLDivElement>(null);
   const points = useRef<{ x: number; y: number; size: number }[]>([]);
-  const animationFrameId = useRef<number>();
+  const animationFrameId = useRef<number | null>(null);
   const lastPointRef = useRef({ x: 0, y: 0 });
   const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
 
@@ -11,7 +11,7 @@ const MouseTrail = () => {
     if (!trailRef.current) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      // Use pageX/pageY instead of clientX/clientY for better cross-page consistency
+      // Use pageX/pageY for consistent positioning
       const x = e.pageX;
       const y = e.pageY;
       
@@ -32,7 +32,7 @@ const MouseTrail = () => {
 
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length > 0) {
-        // Use pageX/pageY for touch events as well
+        // Use pageX/pageY for consistent positioning
         const x = e.touches[0].pageX;
         const y = e.touches[0].pageY;
         
@@ -100,24 +100,66 @@ const MouseTrail = () => {
     };
   }, [isMobile]);
 
+  // Add scroll position to the points calculation
+  const getScrollPosition = () => ({
+    x: window.scrollX || window.pageXOffset,
+    y: window.scrollY || window.pageYOffset,
+  });
+
+  // Get the full document height
+  const getDocumentHeight = () => {
+    return Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+      document.body.offsetHeight,
+      document.documentElement.offsetHeight,
+      document.body.clientHeight,
+      document.documentElement.clientHeight
+    );
+  };
+
+  const [documentSize, setDocumentSize] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? getDocumentHeight() : 0,
+  });
+
+  // Update document size on resize and scroll
+  useEffect(() => {
+    const updateSize = () => {
+      setDocumentSize({
+        width: window.innerWidth,
+        height: getDocumentHeight(),
+      });
+    };
+
+    // Initial size
+    updateSize();
+
+    // Add event listeners
+    window.addEventListener('resize', updateSize);
+    window.addEventListener('scroll', updateSize, { passive: true });
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', updateSize);
+      window.removeEventListener('scroll', updateSize);
+    };
+  }, []);
+
   return (
     <div
       ref={trailRef}
-      className="fixed top-0 left-0 w-screen h-screen pointer-events-none z-[9999]"
+      className="pointer-events-none z-[9999]"
       style={{
-        willChange: 'transform',
-        transform: 'translateZ(0)',
-        // Ensure the trail appears above all other content
-        position: 'fixed',
+        position: 'absolute',
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100vw',
-        height: '100vh',
-        overflow: 'hidden',
-        // Make sure it's above modals and other high-z-index elements
+        width: '100%',
+        height: `${documentSize.height}px`,
         zIndex: 9999,
+        pointerEvents: 'none',
+        willChange: 'transform',
+        transform: 'translateZ(0)', // Force hardware acceleration
       }}
     />
   );
