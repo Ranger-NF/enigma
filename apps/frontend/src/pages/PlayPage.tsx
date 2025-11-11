@@ -2,16 +2,15 @@ import { useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getCurrentDay } from '../services/firestoreService';
 import { usePlay } from '../hooks/usePlay';
-import QuestionCard from '../components/play/QuestionCard';
 import ProgressGrid from '../components/play/ProgressGrid';
 import { Input } from '@/components/ui/input';
-import { motion} from "framer-motion";
 import DayProgress from '@/components/play/DayProgress';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from "framer-motion";
+
 import tutor1 from '@/assets/tutor1.jpeg';
 import tutor2 from '@/assets/tutor2.jpeg';
-import { AnimatePresence } from 'framer-motion';
 
 function PlayPage() {
   const [answer, setAnswer] = useState('');
@@ -70,20 +69,10 @@ function PlayPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="min-h-screen bg-transparent pt-14">
-      <div className="container mx-auto px-4 md:px-6 py-8 font-orbitron">
+      <div className="container mx-auto px-4 md:px-6 py-16 font-orbitron">
 
         <div className="space-y-6">
-          <DayProgress day={displayDay} totalDays={10} />
-          {/* <QuestionCard
-            questionImage={question?.image}
-            questionText={question?.question}
-            hint={question?.hint}
-            difficulty={question?.difficulty}
-            loading={loading}
-            isCompleted={!!question?.isCompleted}
-            cooldownSeconds={cooldownSeconds}
-            onSubmit={(ans) => submitAnswer(ans)}
-          /> */}
+          <DayProgress day={displayDay} totalDays={10} setIsOpen={setIsOpen}/>
           <div className='flex md:flex-row flex-col gap-4 w-full h-[520px] items-center justify-center'>
             <div className='w-[260px] h-[260px] md:h-full md:w-[520px] bg-black'>
               <img
@@ -94,7 +83,7 @@ function PlayPage() {
             </div>
             <div className='flex flex-col w-[500px] h-4xl justify-center items-center'>
               <div className='md:text-3xl text-xl'>Answer :</div>
-              {!!question?.isCompleted ? (
+              {question?.isCompleted ? (
                 <div className="text-center py-6">
                   <div className="text-4xl">🎉</div>
                   <div className="mt-2">You've completed this question.</div>
@@ -176,7 +165,6 @@ function PlayPage() {
           </AnimatePresence>
 
 
-          
           {progress && (
             <ProgressGrid
               days={progress.progress as any}
@@ -185,14 +173,7 @@ function PlayPage() {
               maxAccessibleDay={Math.min(getCurrentDay(), progress.totalDays || getCurrentDay())}
             />
           )}
-          <div className='relative w-full h-[50px] '>
-            <button
-              onClick={() => setIsOpen(true)}
-              className="absolute right-0 px-5 py-3 text-white font-semibold rounded-full border border-[1px] border-white shadow-md hover:bg-blue-700 transition"
-            >
-              ?
-            </button>
-          </div>
+
         </div>
 
       </div>

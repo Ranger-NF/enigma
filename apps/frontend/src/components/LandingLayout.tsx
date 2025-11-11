@@ -8,6 +8,7 @@ import ThreeParticles from "./ThreeParticles"; // stars only on home
 import bg from "@/assets/background.png";
 
 import { Navbar } from "./Navbar";
+import Footer from "./ui/footer";
 
 
 interface LandingLayoutProps {
@@ -42,7 +43,7 @@ const LandingLayout = ({ children, isSignInPage = false }: LandingLayoutProps) =
 
       {/* Stars ONLY on home page */}
       {isHome && <ThreeParticles />}
-      
+
       {/* Mouse trail effect */}
       <MouseTrail />
 
@@ -53,12 +54,14 @@ const LandingLayout = ({ children, isSignInPage = false }: LandingLayoutProps) =
       <main
         className={cn(
           // Pull content a bit higher so home hero sits “more up”
-          "relative z-20 min-h-screen flex flex-col pt-30 md:pt-16",
+          "relative z-20 min-h-screen flex flex-col",
           isSignInPage && "bg-gradient-to-br from-gray-900/60 to-black/60"
         )}
       >
         {children || <Outlet />}
       </main>
+
+      <Footer/>
     </div>
   );
 };

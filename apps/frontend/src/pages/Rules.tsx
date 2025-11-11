@@ -59,7 +59,7 @@ const Rules = () => {
       className="h-screen w-full relative overflow-hidden bg-transparent pt-12">
 
       {/* Page container, no scroll */}
-      <div className="relative z-10 h-full flex flex-col items-center pt-20 pb-6 px-2 overflow-hidden">
+      <div className="relative z-10 h-full flex flex-col items-center pt-20 pb-20 px-2 overflow-hidden">
 
         {/* Title */}
         <h1
@@ -100,7 +100,7 @@ const Rules = () => {
               </ul>
 
               {index < rulesSections.length - 1 && (
-                <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-8" />
+                <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
               )}
             </div>
           ))}

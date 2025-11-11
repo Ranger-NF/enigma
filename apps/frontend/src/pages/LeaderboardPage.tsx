@@ -72,7 +72,7 @@ export default function LeaderboardPage() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="relative w-full min-h-screen pt-24 lg:pt-10 bg-transparent"
+      className="relative w-full min-h-screen pt-24 bg-transparent pb-8 lg:pb-4"
     >
       <div className="container mx-auto px-4 md:px-6 py-8">
 
