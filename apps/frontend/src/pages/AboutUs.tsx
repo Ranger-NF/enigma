@@ -37,7 +37,7 @@ const InfoContainer = ({
             <img
               src={imageSrc}
               alt={headline + ' Logo'}
-              className="w-full h-full object-contain"
+              className="h-full object-contain"
             />
           </div>
         </div>

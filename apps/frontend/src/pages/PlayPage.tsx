@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import tutor1 from '@/assets/tutor1.jpeg';
 import tutor2 from '@/assets/tutor2.jpeg';
+import QuestionImage from '@/components/ui/questionImage';
 
 function PlayPage() {
   const [answer, setAnswer] = useState('');
@@ -30,6 +31,12 @@ function PlayPage() {
     fetchQuestion,
     submitAnswer,
   } = usePlay(currentUser);
+
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [question?.image]);
 
   useEffect(() => {
     if (currentUser) initialize();
@@ -69,44 +76,84 @@ function PlayPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="min-h-screen bg-transparent pt-14">
-      <div className="container mx-auto px-4 md:px-6 py-16 font-orbitron">
+      <div className="container mx-auto px-4 md:px-6 pt-20 font-orbitron">
 
         <div className="space-y-6">
           <DayProgress day={displayDay} totalDays={10} setIsOpen={setIsOpen}/>
-          <div className='flex md:flex-row flex-col gap-4 w-full h-[520px] items-center justify-center'>
-            <div className='w-[260px] h-[260px] md:h-full md:w-[520px] bg-black'>
-              <img
-                src={question?.image}
-                alt='question'
-                className='w-full h-full object-cover'
-              />
-            </div>
-            <div className='flex flex-col w-[500px] h-4xl justify-center items-center'>
-              <div className='md:text-3xl text-xl'>Answer :</div>
-              {question?.isCompleted ? (
-                <div className="text-center py-6">
-                  <div className="text-4xl">🎉</div>
-                  <div className="mt-2">You've completed this question.</div>
-                </div>
-              ) : (
-                <div className='p-1 md:p-0'>
-                  <Input
-                    id="answer-input"
-                    placeholder="Enter answer"
-                    value={answer}
-                    onChange={(e: any) => setAnswer(e.target.value)}
-                    disabled={cooldownSeconds > 0 || submitting}
-                    onKeyDown={(e: any) => e.key === 'Enter' && handleSubmit()}
+          <div className='flex flex-col lg:flex-row items-center'>
+            <div className='flex gap-4 w-auto h-[350px] items-center justify-center'>
+              <div className='w-[260px] h-[260px] md:h-full md:w-[520px] bg-black rounded-lg'>
+
+                {/* Spinner while image loads */}
+                <div className="relative w-full h-full flex items-center justify-center">
+                  {/* Spinner / Placeholder */}
+                  {!imageLoaded && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center bg-black rounded-lg">
+                      {question?.image ? (
+                        <>
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                          <p className="text-gray-300 mt-2">Loading image...</p>
+                        </>
+                      ) : (
+                        <p className="text-gray-400">No image available for this question</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Actual Image */}
+                  <QuestionImage
+                    src={question?.image}
+                    imageLoaded={imageLoaded}
+                    setImageLoaded={setImageLoaded}
                   />
-                  <div className="mt-3 flex gap-2">
-                    <Button onClick={handleSubmit} disabled={submitting || cooldownSeconds > 0} className="flex-1">
-                      {submitting ? 'Submitting...' : cooldownSeconds > 0 ? `Wait ${cooldownSeconds}s` : 'Submit'}
-                    </Button>
-                  </div>
-                  {message && <div className="mt-3 text-sm text-muted-foreground">{message}</div>}
                 </div>
-              )}
+
+              </div>
+              <div className='flex flex-col w-[500px] h-4xl justify-center items-center'>
+
+                {question?.isCompleted ? (
+                  <div >
+                    <div>{question?.question}</div>
+                    <div className='text-center py-6'>
+                      <div className="text-4xl">🎉</div>
+                      <div className="mt-2">You've completed this question.</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className='flex flex-col gap-12 p-1 md:p-0'>
+                      <div>{question?.question}</div>
+                      <div className='flex flex-col gap-2 '>
+
+                        <div className='md:text-3xl text-xl'>Answer :</div>
+                        <Input
+                          id="answer-input"
+                          placeholder="Enter answer"
+                          value={answer}
+                          onChange={(e: any) => setAnswer(e.target.value)}
+                          disabled={cooldownSeconds > 0 || submitting}
+                          onKeyDown={(e: any) => e.key === 'Enter' && handleSubmit()}
+                        />
+                        <div className="mt-3 flex gap-2">
+                          <Button onClick={handleSubmit} disabled={submitting || cooldownSeconds > 0} className="flex-1">
+                            {submitting ? 'Submitting...' : cooldownSeconds > 0 ? `Wait ${cooldownSeconds}s` : 'Submit'}
+                          </Button>
+                        </div>
+                        {message && <div className="mt-3 text-sm text-muted-foreground">{message}</div>}
+
+                      </div>
+                  </div>
+                )}
+              </div>
             </div>
+            {progress && (
+              <ProgressGrid
+                days={progress.progress as any}
+                displayDay={displayDay}
+                onSelectDay={(d) => handleSelectDay(d)}
+                maxAccessibleDay={Math.min(getCurrentDay(), progress.totalDays || getCurrentDay())}
+              />
+            )}
+
           </div>
 
           {/* Popup */}
@@ -163,17 +210,6 @@ function PlayPage() {
               </motion.div>
             )}
           </AnimatePresence>
-
-
-          {progress && (
-            <ProgressGrid
-              days={progress.progress as any}
-              displayDay={displayDay}
-              onSelectDay={(d) => handleSelectDay(d)}
-              maxAccessibleDay={Math.min(getCurrentDay(), progress.totalDays || getCurrentDay())}
-            />
-          )}
-
         </div>
 
       </div>
