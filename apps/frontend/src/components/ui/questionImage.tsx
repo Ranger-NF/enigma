@@ -21,9 +21,8 @@ const QuestionImage: React.FC<QuestionImageProps> = ({ src, imageLoaded, setImag
         onLoad={() => setImageLoaded(true)}
         onError={() => setImageLoaded(true)}
         onClick={handleClick}
-        className={`w-full h-full object-contain cursor-pointer transition-opacity duration-500 ${
-          imageLoaded ? "opacity-100" : "opacity-0"
-        }`}
+        className={`w-full h-full object-contain cursor-pointer transition-opacity duration-500
+                    ${imageLoaded ? "opacity-100" : "opacity-0"}`}
         alt="Question illustration"
       />
 
@@ -36,9 +35,10 @@ const QuestionImage: React.FC<QuestionImageProps> = ({ src, imageLoaded, setImag
           >
             <img
               src={src}
-              alt={src ? "Full view" : "No image available "}
-              className="max-w-full max-h-full object-contain"
+              alt={src ? "Full view" : "No image available"}
+              className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
             />
+
             <button
               className="absolute top-4 right-4 text-white text-2xl font-bold"
               onClick={closeFullscreen}

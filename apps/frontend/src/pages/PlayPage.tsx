@@ -80,12 +80,12 @@ function PlayPage() {
 
         <div className="space-y-6">
           <DayProgress day={displayDay} totalDays={10} setIsOpen={setIsOpen}/>
-          <div className='flex flex-col lg:flex-row items-center '>
+          <div className='flex flex-col lg:flex-row lg:items-start lg:justify-center gap-8 w-full'>
 
-
-            <div className='flex flex-col lg:flex-row gap-4 w-auto lg:h-[350px] items-center justify-center'>
+            <div className='flex flex-col lg:flex-row gap-6 lg:w-[70%] items-center justify-between flex-shrink-0 mx-auto'>
               {/*Image area*/}
-              <div className='w-full h-[30vh] lg:h-full lg:w-[520px] bg-black rounded-lg'>
+              <div className="relative w-[250px] h-[250px] md:w-[380px] md:h-[380px]
+                              bg-black rounded-lg flex items-center justify-center overflow-hidden shrink-0">
 
                 {/* Spinner while image loads */}
                 <div className="relative w-full h-full flex items-center justify-center">
@@ -113,7 +113,7 @@ function PlayPage() {
               </div>
 
               {/*Answer Area*/}
-              <div className='flex flex-col lg:w-[500px] h-4xl justify-center items-center'>
+              <div className='flex flex-col lg:w-[50%] max-w-[500px] justify-center items-center text-center lg:text-left'>
                 {question?.isCompleted ? (
                   <div >
                     <div>{question?.question}</div>
@@ -149,12 +149,15 @@ function PlayPage() {
               </div>
             </div>
             {progress && (
-              <ProgressGrid
-                days={progress.progress as any}
-                displayDay={displayDay}
-                onSelectDay={(d) => handleSelectDay(d)}
-                maxAccessibleDay={Math.min(getCurrentDay(), progress.totalDays || getCurrentDay())}
-              />
+              <div className="lg:w-[30%] w-full">
+                <ProgressGrid
+                  days={progress.progress as any}
+                  displayDay={displayDay}
+                  onSelectDay={(d) => handleSelectDay(d)}
+                  maxAccessibleDay={Math.min(getCurrentDay(), progress.totalDays || getCurrentDay())}
+                />
+              </div>
+
             )}
 
           </div>
