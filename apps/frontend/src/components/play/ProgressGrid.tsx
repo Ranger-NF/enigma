@@ -26,7 +26,7 @@ const ProgressGrid = memo(function ProgressGrid({ days, displayDay, onSelectDay,
       <h3 className="text-lg font-semibold mb-4">Your Progress</h3>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[50vh] overflow-y-auto scrollbar-thin scrollbar-thumb-purple-600/40 scrollbar-track-transparent">
-        {days.map((d) => {
+        { days ? days.map((d) => {
           const isAvailable = d.isAccessible && d.day <= maxAccessibleDay && d.isDateUnlocked !== false;
           return (
             <div
@@ -45,7 +45,7 @@ const ProgressGrid = memo(function ProgressGrid({ days, displayDay, onSelectDay,
               </div>
             </div>
           );
-        })}
+        }): <div></div>}
       </div>
     </div>
   );

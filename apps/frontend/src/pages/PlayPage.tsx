@@ -148,17 +148,16 @@ function PlayPage() {
                 )}
               </div>
             </div>
-            {progress && (
-              <div className="lg:w-[30%] w-full">
-                <ProgressGrid
-                  days={progress.progress as any}
-                  displayDay={displayDay}
-                  onSelectDay={(d) => handleSelectDay(d)}
-                  maxAccessibleDay={Math.min(getCurrentDay(), progress.totalDays || getCurrentDay())}
-                />
-              </div>
 
-            )}
+            <div className="lg:w-[30%] w-full">
+              <ProgressGrid
+                days={progress?.progress as any}
+                displayDay={displayDay}
+                onSelectDay={(d) => handleSelectDay(d)}
+                maxAccessibleDay={Math.min(getCurrentDay(), progress?.totalDays || getCurrentDay())}
+              />
+            </div>
+
 
           </div>
 

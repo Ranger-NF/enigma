@@ -44,9 +44,6 @@ const LandingLayout = ({ children, isSignInPage = false }: LandingLayoutProps) =
       {/* Stars ONLY on home page */}
       {isHome && <ThreeParticles />}
 
-      {/* Mouse trail effect */}
-      <MouseTrail />
-
     {/* NAVBAR */}
       <Navbar isSignInPage={isSignInPage} />
 
@@ -61,7 +58,7 @@ const LandingLayout = ({ children, isSignInPage = false }: LandingLayoutProps) =
         {children || <Outlet />}
       </main>
 
-      <Footer/>
+      {!isHome && <Footer/>}
     </div>
   );
 };

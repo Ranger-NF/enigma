@@ -97,13 +97,11 @@ export function usePlay(user: any) {
         const ts = sessionStorage.getItem('userProgressTs');
         if (cached && ts && Date.now() - Number(ts) < 2 * 60 * 1000) {
           const parsed = JSON.parse(cached) as ProgressResponse;
-          console.log('📦 Using cached progress');
           setProgress(parsed);
           return parsed;
         }
       }
 
-      console.log('🔄 Fetching progress from:', `${BACKEND}/progress`);
       const token = await user.getIdToken();
       const res = await fetch(`${BACKEND}/progress`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) {
@@ -112,7 +110,6 @@ export function usePlay(user: any) {
         return null;
       }
       const data = (await res.json()) as ProgressResponse;
-      console.log('✅ Progress fetched:', data);
       sessionStorage.setItem('userProgress', JSON.stringify(data));
       sessionStorage.setItem('userProgressTs', Date.now().toString());
       setProgress(data);
@@ -162,8 +159,7 @@ export function usePlay(user: any) {
     try {
       const token = await user.getIdToken();
       const url = `${BACKEND}/play?day=${allowedDay}`;
-      
-      console.log('🔄 Fetching question from:', url);
+
 
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
@@ -178,8 +174,7 @@ export function usePlay(user: any) {
         return null;
       }
       const data = (await res.json()) as QuestionResponse;
-      
-      console.log('✅ Question fetched successfully:', data);
+
 
       // Cache the question
       sessionStorage.setItem(cacheKey, JSON.stringify(data));
@@ -277,21 +272,17 @@ export function usePlay(user: any) {
   // Initialize: fetch progress and a recommended question
   const initialize = useCallback(async () => {
     if (!user) {
-      console.log('❌ No user found, skipping initialization');
       return;
     }
-    console.log('🚀 Initializing usePlay hook...');
     setLoading(true);
     try {
       const p = await fetchProgress();
       if (p) {
-        console.log('📊 User has progress, fetching first incomplete question');
         // find first incomplete accessible day (client-side)
         const currentDay = getCurrentDay();
         const accessibleMax = Math.min(currentDay, p.totalDays || currentDay);
         const firstIncomplete = p.progress.find(d => !d.isCompleted && d.isAccessible && (d.day <= accessibleMax));
         const recommended = firstIncomplete ? firstIncomplete.day : Math.min(accessibleMax, p.totalDays || accessibleMax);
-        console.log('📍 Recommended day:', recommended);
         await fetchQuestion(recommended);
       } else {
         await fetchQuestion();
