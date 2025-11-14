@@ -80,7 +80,7 @@ function PlayPage() {
 
         <div className="space-y-6">
           <DayProgress day={displayDay} totalDays={10} setIsOpen={setIsOpen}/>
-          <div className='flex flex-col lg:flex-row lg:items-start lg:justify-center gap-8 w-full'>
+          <div className='flex flex-col lg:flex-row lg:items-start lg:justify-center gap-8 w-full flex-grow min-h-0'>
 
             <div className='flex flex-col lg:flex-row gap-6 lg:w-[70%] items-center justify-between flex-shrink-0 mx-auto'>
               {/*Image area*/}
@@ -149,7 +149,7 @@ function PlayPage() {
               </div>
             </div>
 
-            <div className="lg:w-[30%] w-full">
+            <div className="lg:w-[30%] w-full flex flex-col min-h-0">
               <ProgressGrid
                 days={progress?.progress as any}
                 displayDay={displayDay}

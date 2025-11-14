@@ -15,7 +15,6 @@ const router = Router();
 
 const WRONG_COOLDOWN_SECONDS = 30;
 export const MAX_ATTEMPTS_BEFORE_COOLDOWN = 10;
-const TOTAL_DAYS = 10;
 
 router.get("/play", authMiddleware, async (req: Request, res: Response) => {
   const { db, getCurrentDay } = req.app.locals;
@@ -116,6 +115,8 @@ router.get("/progress", authMiddleware, async (req: Request, res: Response) => {
   const { db, getCurrentDay } = req.app.locals;
 
   try {
+    const snapshot = await db.collection("questions").get();
+    const totalDays = snapshot.size;
     // Fetch user data
     const uid = (req as any).user.uid as string;
     const userRef = db.collection("users").doc(uid);
@@ -125,7 +126,7 @@ router.get("/progress", authMiddleware, async (req: Request, res: Response) => {
     const currentDay = getCurrentDay();
 
     // OPTIMIZATION: Fetch all question documents in parallel
-    const questionPromises = Array.from({ length: TOTAL_DAYS }, (_, i) => {
+    const questionPromises = Array.from({ length: totalDays }, (_, i) => {
       const day = i + 1;
       return db.collection("questions").doc(`day${day}`).get();
     });
@@ -188,7 +189,7 @@ router.get("/progress", authMiddleware, async (req: Request, res: Response) => {
       currentDay,
       progress,
       totalCompleted: progress.filter((p) => p.isCompleted).length,
-      totalDays: TOTAL_DAYS,
+      totalDays: totalDays,
       nextAvailableDay,
       allQuestionsComplete,
       hasIncompleteAccessible,
