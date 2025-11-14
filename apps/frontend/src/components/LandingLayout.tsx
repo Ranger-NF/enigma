@@ -1,9 +1,6 @@
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { cn } from "../lib/utils";
 
-import { useEffect } from "react";
-import MouseTrail from "./ui/MouseTrail";
-import { useSwipeable } from "react-swipeable";
 import ThreeParticles from "./ThreeParticles"; // stars only on home
 import bg from "@/assets/background.png";
 
@@ -40,7 +37,7 @@ const LandingLayout = ({ children, isSignInPage = false }: LandingLayoutProps) =
       <div className="pointer-events-none fixed inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/70 to-transparent z-10" />
 
       {/* Stars ONLY on home page */}
-      {isHome && <ThreeParticles />}
+      <ThreeParticles />
 
     {/* NAVBAR */}
       <Navbar isSignInPage={isSignInPage} />

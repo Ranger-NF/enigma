@@ -185,7 +185,7 @@ export function Navbar({ isSignInPage = false, className }: { isSignInPage?: boo
                   <button className="flex items-center space-x-2 focus:outline-none">
                     <Avatar className="h-10 w-10 border-2 border-white/20">
                       <AvatarImage src={currentUser.photoURL ?? undefined} />
-                      <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                      <AvatarFallback className="bg-white text-black">
                         {currentUser.displayName?.[0]?.toUpperCase() ||
                           currentUser.email?.[0]?.toUpperCase() ||
                           "U"}
