@@ -42,6 +42,8 @@
     --ring: 215 100% 50%;
 
     --radius: 0.5rem;
+
+    --realHeight: 100svh;
   }
 
   .dark {
