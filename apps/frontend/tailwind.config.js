@@ -19,10 +19,11 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['var(--font-sans)', ...fontFamily.sans],
+        sans: ['Inter', 'Helvetica', 'Arial', 'sans-serif'],
         orbitron: ['var(--font-orbitron)', 'sans-serif'],
         montserrat: ['var(--font-montserrat)', 'sans-serif'],
         pavelt: ['var(--font-pavelt)', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
       },
       colors: {
         border: 'hsl(var(--border))',
