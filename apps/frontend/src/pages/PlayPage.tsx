@@ -177,8 +177,11 @@ function PlayPage() {
                   exit={{ scale: 0.8, opacity: 0, y: 50 }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
                 >
+                  {/* Tutorial heading with underline */}
+                  <h2 className="text-xl font-bold text-center text-black mb-4 pb-2 border-b-2 border-gray-200">Tutorial</h2>
+                  
                   {/* Two images in one row */}
-                  <div className="flex gap-4 justify-center">
+                  <div className="flex gap-4 justify-center mt-4">
                     <img
                       src={tutor1}
                       alt="Dummy"
