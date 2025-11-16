@@ -64,22 +64,23 @@ const Rules = () => {
         {/* Title */}
         <h1
           className={cn(
-            "text-4xl md:text-5xl font-bold text-center mb-4 font-orbitron",
-            "text-white tracking-wider",
+            "text-4xl md:text-5xl font-semibold text-center mb-3",
+            "text-white tracking-tight",
+            "font-sans",
             "[text-shadow:_0_0_10px_rgba(79,70,229,0.6)]"
           )}
         >
-          GAME RULES
+          Game Rules
         </h1>
 
-        <p className="text-md md:text-lg text-center text-gray-300 mb-4 font-orbitron max-w-xl">
+        <p className="text-lg text-center text-gray-300 mb-8 max-w-xl leading-relaxed">
           Master the challenge with these essential guidelines
         </p>
 
         <div
           className={cn(
             "bg-white/6 backdrop-blur-xl rounded-2xl border border-white/15",
-            "p-6 md:p-8 space-y-2 w-full max-w-4xl",
+            "p-8 md:p-10 space-y-6 w-full max-w-4xl font-sans",
             "h-[65vh] overflow-y-auto relative",
             "scrollbar-thin scrollbar-thumb-purple-600/40 scrollbar-track-transparent"
           )}
@@ -88,13 +89,13 @@ const Rules = () => {
             <div key={index}>
               <div className="flex items-center">
                 <span className="text-3xl mr-3">{section.icon}</span>
-                <h2 className="text-2xl font-bold font-orbitron text-white">
+                <h2 className="text-xl font-semibold text-white tracking-tight">
                   {section.title}
                 </h2>
               </div>
 
               <ul className="space-y-2 w-full border-white/10 ml-2">
-                <div className="p-2 w-full h-[100px]">
+                <div className="p-2 w-full min-h-[100px] text-gray-200 leading-relaxed">
                   {section.descriptions}
                 </div>
               </ul>

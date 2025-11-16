@@ -171,14 +171,17 @@ function PlayPage() {
                 exit={{ opacity: 0 }}
               >
                 <motion.div
-                  className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full mx-4"
+                  className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full mx-4 font-sans"
                   initial={{ scale: 0.8, opacity: 0, y: -50 }}
                   animate={{ scale: 1, opacity: 1, y: 0 }}
                   exit={{ scale: 0.8, opacity: 0, y: 50 }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
                 >
+                  {/* Tutorial heading with underline */}
+                  <h2 className="text-2xl font-semibold text-center text-gray-900 mb-4 pb-3 border-b border-gray-200 tracking-tight">Tutorial</h2>
+                  
                   {/* Two images in one row */}
-                  <div className="flex gap-4 justify-center">
+                  <div className="flex gap-4 justify-center mt-4">
                     <img
                       src={tutor1}
                       alt="Dummy"
@@ -192,13 +195,13 @@ function PlayPage() {
                   </div>
 
                   {/* Content */}
-                  <div className="mt-4 text-center text-gray-700">
-                    <p>
+                  <div className="mt-6 text-center">
+                    <p className="text-gray-700 leading-relaxed">
                       France gifted the Statue of Liberty to the USA. <br />
                       It was made of copper and over time it turned green due to chemical reactions.
                     </p>
-                    <p className="mt-3 font-semibold text-gray-900">
-                      Answer: Statue of Liberty
+                    <p className="mt-4 font-medium text-gray-900 text-lg">
+                      Answer: <span className="font-semibold">Statue of Liberty</span>
                     </p>
                   </div>
 
@@ -206,7 +209,7 @@ function PlayPage() {
                   <div className="mt-5 flex justify-center">
                     <button
                       onClick={() => setIsOpen(false)}
-                      className="px-5 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                      className="px-6 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 font-medium text-sm tracking-wide"
                     >
                       Close
                     </button>
