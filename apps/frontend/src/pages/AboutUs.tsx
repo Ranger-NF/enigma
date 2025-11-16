@@ -2,6 +2,7 @@ import EnigmaLogo from "@/assets/logo1.png";
 import InventoLogo from "@/assets/invento.png";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import Footer from "../components/ui/footer.tsx";
 
 const InfoContainer = ({
   headline,
@@ -67,19 +68,37 @@ const AboutUs = () => {
   ];
 
   return (
+  <>
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-      className="flex flex-col lg:flex-row min-h-screen w-full justify-center items-center gap-8 px-4 md:px-10 bg-transparent relative z-10 pt-32 pb-8 lg:pb-4"
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="flex flex-col lg:flex-row min-h-screen w-full justify-center items-center gap-8 px-4 md:px-10 bg-transparent relative z-10 pt-32 pb-8 lg:pb-4 overflow-hidden"
     >
       {/* ENIGMA SECTION */}
-      <InfoContainer headline="Enigma" contents={enigmaContents} imageSrc={EnigmaLogo} />
+      <InfoContainer
+        headline="Enigma"
+        contents={enigmaContents}
+        imageSrc={EnigmaLogo}
+      />
 
       {/* INVENTO SECTION */}
-      <InfoContainer headline="Invento '26" contents={inventoContents} imageSrc={InventoLogo} />
+      <InfoContainer
+        headline="Invento '26"
+        contents={inventoContents}
+        imageSrc={InventoLogo}
+      />
     </motion.div>
-  );
+
+    {/* FOOTER - always stays bottom */}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
+      <Footer />
+    </motion.div>
+  </>
+);
 };
 
 export default AboutUs;

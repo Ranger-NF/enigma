@@ -5,7 +5,7 @@ import ThreeParticles from "./ThreeParticles"; // stars only on home
 import bg from "@/assets/background.png";
 
 import { Navbar } from "./Navbar";
-import Footer from "./ui/footer";
+//import Footer from "./ui/footer";
 
 
 interface LandingLayoutProps {
@@ -53,7 +53,7 @@ const LandingLayout = ({ children, isSignInPage = false }: LandingLayoutProps) =
         {children || <Outlet />}
       </main>
 
-      {!isHome && <Footer/>}
+      {!isHome}
     </div>
   );
 };

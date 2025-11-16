@@ -20,11 +20,6 @@ const Rules = () => {
       descriptions: "It’s not just about solving — it’s about how fast you solve. The quickest minds rise to the top, no second chances with time."
     },
     {
-      title: "Answer Format",
-      icon: "",
-      descriptions: "You’ll have to answer exactly as instructed — lowercase, uppercase, spaces, symbols — whatever the rulebook says. We’ll sort that out for you; just spell it right."
-    },
-    {
       title: "Hints",
       icon: "",
       descriptions: "We might drop a few hints here and there… or maybe not. Keep an eye on the question page; surprises happen when you least expect them."
