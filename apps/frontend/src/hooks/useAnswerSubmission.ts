@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { QuestionResponse } from "./useQuestion";
 
 interface SubmitAnswerParams {
   user: any;
