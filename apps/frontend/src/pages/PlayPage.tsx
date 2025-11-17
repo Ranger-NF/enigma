@@ -68,6 +68,14 @@ function PlayPage() {
     }
   };
   const [isOpen, setIsOpen] = useState(false);
+  const [showFinalCongrats, setShowFinalCongrats] = useState(false);
+  useEffect(() => {
+    if (question?.isCompleted && displayDay === progress?.progress.length) {
+      setShowFinalCongrats(true);
+    }
+  }, [question, displayDay, progress]);
+
+
 
 
   return (
@@ -79,7 +87,7 @@ function PlayPage() {
       <div className="container mx-auto px-4 md:px-6 pt-20 font-orbitron">
 
         <div className="space-y-6">
-          <DayProgress day={displayDay} totalDays={progress?.progress.length} setIsOpen={setIsOpen}/>
+          <DayProgress day={displayDay} totalDays={progress?.progress.length} setIsOpen={setIsOpen} />
           <div className='flex flex-col lg:flex-row lg:items-start lg:justify-center gap-8 w-full flex-grow min-h-0'>
 
             <div className='flex flex-col lg:flex-row gap-6 lg:w-[70%] items-center justify-between flex-shrink-0 mx-auto'>
@@ -124,26 +132,26 @@ function PlayPage() {
                   </div>
                 ) : (
                   <div className='flex flex-col gap-12 p-1 md:p-0'>
-                      <div>{question?.question}</div>
-                      <div className='flex flex-col gap-2 '>
+                    <div>{question?.question}</div>
+                    <div className='flex flex-col gap-2 '>
 
-                        <div className='md:text-3xl text-xl'>Answer :</div>
-                        <Input
-                          id="answer-input"
-                          placeholder="Enter answer"
-                          value={answer}
-                          onChange={(e: any) => setAnswer(e.target.value)}
-                          disabled={cooldownSeconds > 0 || submitting}
-                          onKeyDown={(e: any) => e.key === 'Enter' && handleSubmit()}
-                        />
-                        <div className="mt-3 flex gap-2">
-                          <Button onClick={handleSubmit} disabled={submitting || cooldownSeconds > 0} className="flex-1">
-                            {submitting ? 'Submitting...' : cooldownSeconds > 0 ? `Wait ${cooldownSeconds}s` : 'Submit'}
-                          </Button>
-                        </div>
-                        {message && <div className="mt-3 text-sm text-muted-foreground">{message}</div>}
-
+                      <div className='md:text-3xl text-xl'>Answer :</div>
+                      <Input
+                        id="answer-input"
+                        placeholder="Enter answer"
+                        value={answer}
+                        onChange={(e: any) => setAnswer(e.target.value)}
+                        disabled={cooldownSeconds > 0 || submitting}
+                        onKeyDown={(e: any) => e.key === 'Enter' && handleSubmit()}
+                      />
+                      <div className="mt-3 flex gap-2">
+                        <Button onClick={handleSubmit} disabled={submitting || cooldownSeconds > 0} className="flex-1">
+                          {submitting ? 'Submitting...' : cooldownSeconds > 0 ? `Wait ${cooldownSeconds}s` : 'Submit'}
+                        </Button>
                       </div>
+                      {message && <div className="mt-3 text-sm text-muted-foreground">{message}</div>}
+
+                    </div>
                   </div>
                 )}
               </div>
@@ -219,6 +227,47 @@ function PlayPage() {
             )}
           </AnimatePresence>
         </div>
+
+        <AnimatePresence>
+  {showFinalCongrats && (
+    <motion.div
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div
+        className="rounded-2xl p-6 max-w-md w-full mx-4 text-center 
+                   bg-white/10 border border-white/20 backdrop-blur-xl shadow-xl"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <h2 className="text-2xl font-semibold text-white mb-4 tracking-wide">
+          🎉 Congratulations! 🎉
+        </h2>
+
+        <p className="text-gray-200 leading-relaxed">
+          You’ve completed all available challenges!<br />
+          Absolute legend energy.
+        </p>
+
+        <div className="mt-6">
+          <button
+            onClick={() => setShowFinalCongrats(false)}
+            className="px-6 py-2.5 rounded-lg bg-white/20 text-white 
+                       hover:bg-white/30 transition-colors border border-white/30"
+          >
+            Awesome!
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+
 
       </div>
     </motion.div>

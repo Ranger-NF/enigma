@@ -68,13 +68,57 @@ export interface UserProgress {
   completed: { [key: string]: CompletedDay };
 }
 
-// Get current day (1-10)
+// Get current day (1-5) - Based on question unlock dates
 export const getCurrentDay = (): number => {
-  const startDate = new Date('2025-09-30'); // Adjust this to your start date
+  const startDate = new Date('2025-11-17'); // November 17, 2025
+  const endDate = new Date('2025-11-22'); // November 22, 2025
   const today = new Date();
+  
+  // If before start date, return day 1
+  if (today < startDate) {
+    return 1;
+  }
+  
+  // If after end date, return day 5
+  if (today > endDate) {
+    return 5;
+  }
+  
+  // Calculate which day we're on (1-5)
   const diffTime = today.getTime() - startDate.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return Math.min(Math.max(diffDays, 1), 10); // Clamp between 1 and 10
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  return Math.min(Math.max(diffDays, 1), 5); // Clamp between 1 and 5
+};
+
+// Check if a day is unlocked based on question's unlock date
+export const isDayUnlocked = async (day: number): Promise<boolean> => {
+  const questionRef = doc(db, 'questions', `day${day}`);
+  const questionSnap = await getDoc(questionRef);
+  
+  if (!questionSnap.exists()) return false;
+  
+  const questionData = questionSnap.data() as Question;
+  if (!questionData.unlockDate) return true; // If no unlock date, assume unlocked
+  
+  const unlockDate = questionData.unlockDate.toDate();
+  const now = new Date();
+  
+  return now >= unlockDate;
+};
+
+// Get all unlocked days up to current day
+export const getUnlockedDays = async (): Promise<number[]> => {
+  const currentDay = getCurrentDay();
+  const unlockedDays: number[] = [];
+  
+  for (let day = 1; day <= currentDay; day++) {
+    const isUnlocked = await isDayUnlocked(day);
+    if (isUnlocked) {
+      unlockedDays.push(day);
+    }
+  }
+  
+  return unlockedDays;
 };
 
 // Create or update user profile
