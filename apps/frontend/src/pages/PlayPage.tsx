@@ -79,7 +79,7 @@ function PlayPage() {
       <div className="container mx-auto px-4 md:px-6 pt-20 font-orbitron">
 
         <div className="space-y-6">
-          <DayProgress day={displayDay} totalDays={10} setIsOpen={setIsOpen}/>
+          <DayProgress day={displayDay} totalDays={progress?.progress.length} setIsOpen={setIsOpen}/>
           <div className='flex flex-col lg:flex-row lg:items-start lg:justify-center gap-8 w-full flex-grow min-h-0'>
 
             <div className='flex flex-col lg:flex-row gap-6 lg:w-[70%] items-center justify-between flex-shrink-0 mx-auto'>
@@ -179,7 +179,7 @@ function PlayPage() {
                 >
                   {/* Tutorial heading with underline */}
                   <h2 className="text-2xl font-semibold text-center text-gray-900 mb-4 pb-3 border-b border-gray-200 tracking-tight">Tutorial</h2>
-                  
+
                   {/* Two images in one row */}
                   <div className="flex gap-4 justify-center mt-4">
                     <img
