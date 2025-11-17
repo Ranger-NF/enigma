@@ -7,7 +7,6 @@ import { motion } from "framer-motion";
 interface LeaderboardEntry {
   id: string;
   name: string;
-  email: string;
   completedAt: any;
   attempts: number;
   rank: number;
@@ -114,8 +113,8 @@ export default function LeaderboardPage() {
                     variant={isSelected ? "default" : "outline"}
                     disabled={day > currentDay}
                     className={`transition-all ${
-                      isSelected 
-                        ? "bg-white text-black hover:bg-gray-200" 
+                      isSelected
+                        ? "bg-white text-black hover:bg-gray-200"
                         : day > currentDay
                         ? "opacity-40 cursor-not-allowed"
                         : "bg-transparent border-white/30 text-white hover:bg-white/10"
@@ -177,32 +176,34 @@ export default function LeaderboardPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
                     className={`px-6 py-4 flex items-center justify-between transition-colors ${
-                      currentUser && entry.id === currentUser.uid 
-                        ? 'bg-white/15 border-l-4 border-l-white' 
+                      currentUser && entry.id === currentUser.uid
+                        ? 'bg-white/15 border-l-4 border-l-white'
                         : 'hover:bg-white/5'
                     }`}
                   >
                     <div className="flex items-center space-x-4 flex-1">
-                      <div className="text-2xl min-w-[3.5rem] text-white font-bold">
+                      <div className="text-2xl min-w-[0.5rem] text-white font-bold">
                         {getRankIcon(entry.rank)}
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-sm lg:text-lg font-semibold text-white">
-                          {entry.name || 'Anonymous'}
-                          {currentUser && entry.id === currentUser.uid && ' (You)'}
-                        </h3>
-                        <p className="text-xs text-gray-400 mt-1">
-                          Attempts: {entry.attempts}
-                        </p>
+                      <div className="flex flex-1 flex-col md:flex-row">
+                        <div className="flex-1">
+                          <h3 className="text-sm lg:text-lg font-semibold text-white">
+                            {entry.name || 'Anonymous'}
+                            {currentUser && entry.id === currentUser.uid && ' (You)'}
+                          </h3>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Attempts: {entry.attempts}
+                          </p>
+                        </div>
+                        <div className="flex flex-col pt-4 md:pt-0 gap-1 text-white">
+                          <p className="flex text-xs md:justify-end text-gray-400 md:uppercase tracking-wide">
+                            Completed
+                          </p>
+                          <p className="text-[12px] md:text-sm lg:text-lg font-semibold">
+                            {formatTime(entry.completedAt)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-right text-white">
-                      <p className="text-[10px] lg:text-xs text-gray-400 uppercase tracking-wide">
-                        Completed
-                      </p>
-                      <p className="text-sm lg:text-lg font-semibold">
-                        {formatTime(entry.completedAt)}
-                      </p>
                     </div>
                   </motion.div>
                 ))}
