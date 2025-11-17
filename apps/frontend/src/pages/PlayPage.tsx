@@ -76,7 +76,7 @@ function PlayPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="min-h-screen bg-transparent pt-14">
-      <div className="container mx-auto px-4 md:px-6 pt-20 font-orbitron">
+      <div className="container mx-auto px-4 md:px-6 pt-20 font-sans">
 
         <div className="space-y-6">
           <DayProgress day={displayDay} totalDays={progress?.progress.length} setIsOpen={setIsOpen}/>
@@ -95,10 +95,10 @@ function PlayPage() {
                       {question?.image ? (
                         <>
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                          <p className="text-gray-300 mt-2">Loading image...</p>
+                          <p className="text-gray-300 mt-2 font-sans">Loading image...</p>
                         </>
                       ) : (
-                        <p className="text-gray-400">No image available for this question</p>
+                        <p className="text-gray-400 font-sans">No image available for this question</p>
                       )}
                     </div>
                   )}
@@ -116,18 +116,18 @@ function PlayPage() {
               <div className='flex flex-col lg:w-[50%] max-w-[500px] justify-center items-center text-center lg:text-left'>
                 {question?.isCompleted ? (
                   <div >
-                    <div>{question?.question}</div>
+                    <div className="font-medium text-gray-100 leading-relaxed">{question?.question}</div>
                     <div className='text-center py-6'>
                       <div className="text-4xl">🎉</div>
-                      <div className="mt-2">You've completed this question.</div>
+                      <div className="mt-2 text-gray-300 font-medium">You've completed this question.</div>
                     </div>
                   </div>
                 ) : (
                   <div className='flex flex-col gap-12 p-1 md:p-0'>
-                      <div>{question?.question}</div>
+                      <div className="font-medium text-gray-100 leading-relaxed">{question?.question}</div>
                       <div className='flex flex-col gap-2 '>
 
-                        <div className='md:text-3xl text-xl'>Answer :</div>
+                        <div className='md:text-2xl text-xl font-medium text-gray-200 tracking-wide'>Answer :</div>
                         <Input
                           id="answer-input"
                           placeholder="Enter answer"
