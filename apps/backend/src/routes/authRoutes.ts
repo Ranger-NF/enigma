@@ -68,7 +68,7 @@ router.get(
       const userData = userDoc.data();
       res.json({
         user: { id: userDoc.id, ...userData },
-        currentDay: getCurrentDay(),
+        currentDay: await getCurrentDay(),
       });
     } catch (error) {
       console.error("Error fetching user progress:", error);

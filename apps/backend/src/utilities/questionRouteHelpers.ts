@@ -98,12 +98,12 @@ export const isDayCompleted = (userData: UserData, day: number): boolean => {
 /**
  * Check serial progression and determine if day is accessible
  */
-export const checkSerialProgression = (
+export const checkSerialProgression = async (
   currentDay: number,
   requestedDay: number | null,
   userData: UserData,
   getCurrentDay: () => number,
-): { isUnlocked: boolean; lockReason: string; isCatchUp: boolean } => {
+): Promise<{ isUnlocked: boolean; lockReason: string; isCatchUp: boolean; }> => {
   if (currentDay === 1) {
     return { isUnlocked: true, lockReason: "", isCatchUp: false };
   }
@@ -116,8 +116,8 @@ export const checkSerialProgression = (
 
   // Handle catch-up mode
   if (requestedDay) {
-    const isPreviousDay = requestedDay < getCurrentDay();
-    const isCurrentDay = requestedDay === getCurrentDay();
+    const isPreviousDay = requestedDay < await getCurrentDay();
+    const isCurrentDay = requestedDay === await getCurrentDay();
 
     if (isPreviousDay || isCurrentDay) {
       return {
