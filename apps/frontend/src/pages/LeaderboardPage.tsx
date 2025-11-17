@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { getCurrentDay, getDailyLeaderboard, getEnhancedDailyLeaderboard } from "../services/firestoreService";
+import { getCurrentDay, getEnhancedDailyLeaderboard } from "../services/firestoreService";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
@@ -22,10 +22,14 @@ export default function LeaderboardPage() {
   const [userRank, setUserRank] = useState<number | null>(null);
 
   useEffect(() => {
-    const day = getCurrentDay();
-    setCurrentDay(day);
-    setSelectedDay(day);
-    fetchLeaderboard(day);
+    const load = async () => {
+      const day = await getCurrentDay();
+      setCurrentDay(day);
+      setSelectedDay(day);
+      fetchLeaderboard(day);
+    };
+
+    load();
   }, []);
 
   const fetchLeaderboard = async (day: number) => {
@@ -106,9 +110,7 @@ export default function LeaderboardPage() {
             <div className="flex flex-wrap gap-2">
               {Array.from({ length: 5 }, (_, i) => {
                 const day = i + 1;
-                const isCurrentDay = day === currentDay;
                 const isSelected = day === selectedDay;
-                const isPastDay = day < currentDay;
 
                 return (
                   <Button
