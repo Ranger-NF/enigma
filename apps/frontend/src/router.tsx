@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import ProtectedRoute from "./components/ProtectedRoute";
 import LandingLayout from "./components/LandingLayout";
-import { LoadingWrapper } from './components/LoadingWrapper';
 
 // Lazy loaded pages
 const HomePage = lazy(() => import("./pages/HomePage"));
