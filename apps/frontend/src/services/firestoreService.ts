@@ -295,6 +295,8 @@ export const getEnhancedDailyLeaderboard = async (day: number, limitCount: numbe
   querySnapshot.forEach((doc: QueryDocumentSnapshot) => {
     const userData = doc.data() as User;
     const completedData = userData.completed[`day${day}`];
+
+    
     
     if (completedData?.timestamp) {
       entries.push({

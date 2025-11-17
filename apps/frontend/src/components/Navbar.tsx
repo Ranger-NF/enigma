@@ -193,7 +193,10 @@ export function Navbar({ isSignInPage = false, className }: { isSignInPage?: boo
                     </Avatar>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-gray-900 border border-gray-800">
+                <DropdownMenuContent align="start" className="w-48 bg-gray-900 border border-gray-800">
+                  <DropdownMenuItem>
+                    {currentUser.email}
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout} className="text-red-400">
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout

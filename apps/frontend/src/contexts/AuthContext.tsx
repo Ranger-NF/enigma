@@ -9,6 +9,7 @@ import {
   type UserCredential
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { createOrUpdateUser } from '@/services/firestoreService';
 
 interface UserProgress {
   completed: {
@@ -45,6 +46,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     try {
       const result = await signInWithPopup(auth, provider);
+      
+      await createOrUpdateUser(result.user.uid, {
+        name: result.user.displayName || '',
+        email: result.user.email || '',
+      });
+
       return result;
     } catch (error: any) {
       const errorCode = error.code;

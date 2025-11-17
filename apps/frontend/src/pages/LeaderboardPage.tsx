@@ -59,7 +59,10 @@ export default function LeaderboardPage() {
   const formatTime = (timestamp: any) => {
     if (!timestamp) return "N/A";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleTimeString("en-US", {
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
@@ -188,9 +191,6 @@ export default function LeaderboardPage() {
                           {entry.name || 'Anonymous'}
                           {currentUser && entry.id === currentUser.uid && ' (You)'}
                         </h3>
-                        <p className="text-[10px] lg:text-sm text-gray-300">
-                          {entry.email}
-                        </p>
                         <p className="text-xs text-gray-400 mt-1">
                           Attempts: {entry.attempts}
                         </p>
