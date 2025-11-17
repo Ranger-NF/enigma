@@ -46,13 +46,16 @@ app.get("/test", (req, res) => {
   });
 });
 
-// Utility function
-const getCurrentDay = (): number => {
-  const startDate = new Date("2025-09-30");
-  const today = new Date();
-  const diffTime = today.getTime() - startDate.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return Math.min(Math.max(diffDays, 1), 10);
+const getCurrentDay = async () => {
+  const snapshot = await db.collection("questions").orderBy("day").get();
+  const now = new Date();
+
+  const unlockedCount = snapshot.docs.filter(doc => {
+    const d = doc.data().unlockDate?.toDate();
+    return d && d <= now;
+  }).length;
+
+  return Math.max(1, unlockedCount);
 };
 
 // Make db and getCurrentDay available to routes

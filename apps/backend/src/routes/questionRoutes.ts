@@ -24,7 +24,7 @@ router.get("/play", authMiddleware, async (req: Request, res: Response) => {
     const requestedDay = req.query.day
       ? parseInt(req.query.day as string)
       : null;
-    const currentDay = requestedDay || getCurrentDay();
+    const currentDay = requestedDay || await getCurrentDay();
 
     // Fetch question document
     const questionRef = db.collection("questions").doc(`day${currentDay}`);
@@ -65,7 +65,7 @@ router.get("/play", authMiddleware, async (req: Request, res: Response) => {
     const userData = userDoc.exists ? userDoc.data() || {} : {};
 
     // Check serial progression
-    const progression = checkSerialProgression(
+    const progression = await checkSerialProgression(
       currentDay,
       requestedDay,
       userData,
@@ -123,7 +123,7 @@ router.get("/progress", authMiddleware, async (req: Request, res: Response) => {
     const userDoc = await userRef.get();
     const userData = userDoc.exists ? userDoc.data() || {} : {};
 
-    const currentDay = getCurrentDay();
+    const currentDay = await getCurrentDay();
 
     // OPTIMIZATION: Fetch all question documents in parallel
     const questionPromises = Array.from({ length: totalDays }, (_, i) => {

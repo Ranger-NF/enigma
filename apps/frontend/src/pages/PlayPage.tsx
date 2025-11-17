@@ -22,10 +22,6 @@ function PlayPage() {
     displayDay,
     question,
     progress,
-    loading,
-    questionLoading,
-    attemptsInPeriod,
-    attemptsBeforeCooldown,
     cooldownSeconds,
     initialize,
     fetchQuestion,
@@ -44,7 +40,7 @@ function PlayPage() {
 
   const handleSelectDay = useCallback(async (day: number) => {
     const currentDay = getCurrentDay();
-    if (day > currentDay) return;
+    if (day > await currentDay) return;
     await fetchQuestion(day);
   }, [fetchQuestion]);
 
@@ -62,6 +58,8 @@ function PlayPage() {
       } else {
         setMessage(res.data?.result || 'Submitted');
         setAnswer('');
+
+        await fetchQuestion(displayDay);
       }
     } finally {
       setSubmitting(false);
@@ -162,7 +160,6 @@ function PlayPage() {
                 days={progress?.progress as any}
                 displayDay={displayDay}
                 onSelectDay={(d) => handleSelectDay(d)}
-                maxAccessibleDay={Math.min(getCurrentDay(), progress?.totalDays || getCurrentDay())}
               />
             </div>
 

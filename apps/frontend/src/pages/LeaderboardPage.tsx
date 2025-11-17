@@ -73,11 +73,6 @@ export default function LeaderboardPage() {
     return `#${rank}`;
   };
 
-  // Get the date for each day (Nov 17-22, 2025)
-  const getDayDate = (day: number): string => {
-    const dates = ["Nov 17", "Nov 18", "Nov 19", "Nov 20", "Nov 21", "Nov 22"];
-    return dates[day - 1] || "";
-  };
 
   return (
     <motion.div
@@ -94,10 +89,7 @@ export default function LeaderboardPage() {
             Daily Leaderboard
           </h1>
           <p className="text-gray-300 text-lg">
-            See who completed today's challenge the fastest!
-          </p>
-          <p className="text-gray-400 text-sm mt-2">
-            Challenge runs from November 17-22, 2025
+            See who completed challenge the fastest!
           </p>
         </div>
 
@@ -128,9 +120,6 @@ export default function LeaderboardPage() {
                   >
                     <div className="flex flex-col items-center">
                       <span>Day {day}</span>
-                      <span className="text-xs opacity-70">
-                        {getDayDate(day)}
-                      </span>
                     </div>
                   </Button>
                 );
@@ -149,7 +138,7 @@ export default function LeaderboardPage() {
                 <div>
                   <h3 className="text-lg font-semibold">Your Ranking</h3>
                   <p className="text-sm text-gray-300">
-                    You are ranked #{userRank} for Day {selectedDay} ({getDayDate(selectedDay)})
+                    You are ranked #{userRank} for Day {selectedDay}
                   </p>
                 </div>
                 <div className="text-3xl">{getRankIcon(userRank)}</div>
@@ -161,7 +150,7 @@ export default function LeaderboardPage() {
           <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg overflow-hidden">
             <div className="bg-white/10 px-6 py-4 border-b border-white/10">
               <h2 className="text-xl font-semibold text-white">
-                Day {selectedDay} - {getDayDate(selectedDay)} Leaderboard
+                Day {selectedDay} - Leaderboard
                 {selectedDay === currentDay && " (Today)"}
               </h2>
             </div>
