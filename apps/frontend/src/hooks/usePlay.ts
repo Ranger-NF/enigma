@@ -126,7 +126,7 @@ export function usePlay(user: any) {
   const fetchQuestion = useCallback(async (day?: number) => {
     if (!user) return null;
 
-    const currentDay = getCurrentDay();
+    const currentDay = await getCurrentDay();
     const targetDay = typeof day === 'number' ? day : currentDay;
     const allowedDay = Math.min(targetDay, currentDay);
 
@@ -244,7 +244,7 @@ export function usePlay(user: any) {
 
         // Auto-navigate to next question if it exists and is unlocked
         if (updatedProgress) {
-          const currentDay = getCurrentDay();
+          const currentDay = await getCurrentDay();
           const nextDay = displayDay + 1;
           const maxDay = Math.min(currentDay, updatedProgress.totalDays || currentDay);
 
@@ -279,7 +279,7 @@ export function usePlay(user: any) {
       const p = await fetchProgress();
       if (p) {
         // find first incomplete accessible day (client-side)
-        const currentDay = getCurrentDay();
+        const currentDay = await getCurrentDay();
         const accessibleMax = Math.min(currentDay, p.totalDays || currentDay);
         const firstIncomplete = p.progress.find(d => !d.isCompleted && d.isAccessible && (d.day <= accessibleMax));
         const recommended = firstIncomplete ? firstIncomplete.day : Math.min(accessibleMax, p.totalDays || accessibleMax);

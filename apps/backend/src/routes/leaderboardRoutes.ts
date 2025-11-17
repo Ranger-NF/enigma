@@ -53,7 +53,7 @@ router.get("/leaderboard/:day", async (req: Request, res: Response) => {
 
 router.get("/leaderboard", async (req: Request, res: Response) => {
   const { getCurrentDay } = req.app.locals;
-  const currentDay = getCurrentDay();
+  const currentDay = await getCurrentDay();
   return res.redirect(`/leaderboard/${currentDay}`);
 });
 

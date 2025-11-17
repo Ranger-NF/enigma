@@ -68,13 +68,49 @@ export interface UserProgress {
   completed: { [key: string]: CompletedDay };
 }
 
-// Get current day (1-10)
-export const getCurrentDay = (): number => {
-  const startDate = new Date('2025-09-30'); // Adjust this to your start date
-  const today = new Date();
-  const diffTime = today.getTime() - startDate.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return Math.min(Math.max(diffDays, 1), 10); // Clamp between 1 and 10
+export const getCurrentDay = async (): Promise<number> => {
+  const questions = await getAllQuestions(); // already sorted by day ASC
+  const now = new Date();
+
+  // Count how many questions have unlockDate <= now
+  const unlockedCount = questions.filter(q => {
+    const unlockDate = q.unlockDate?.toDate?.() ?? null;
+    return unlockDate && unlockDate <= now;
+  }).length;
+
+  // At least day 1 must be returned
+  return Math.max(1, unlockedCount);
+};
+
+// Check if a day is unlocked based on question's unlock date
+export const isDayUnlocked = async (day: number): Promise<boolean> => {
+  const questionRef = doc(db, 'questions', `day${day}`);
+  const questionSnap = await getDoc(questionRef);
+  
+  if (!questionSnap.exists()) return false;
+  
+  const questionData = questionSnap.data() as Question;
+  if (!questionData.unlockDate) return true; // If no unlock date, assume unlocked
+  
+  const unlockDate = questionData.unlockDate.toDate();
+  const now = new Date();
+  
+  return now >= unlockDate;
+};
+
+// Get all unlocked days up to current day
+export const getUnlockedDays = async (): Promise<number[]> => {
+  const currentDay = await getCurrentDay();
+  const unlockedDays: number[] = [];
+  
+  for (let day = 1; day <= currentDay; day++) {
+    const isUnlocked = await isDayUnlocked(day);
+    if (isUnlocked) {
+      unlockedDays.push(day);
+    }
+  }
+  
+  return unlockedDays;
 };
 
 // Create or update user profile
@@ -173,7 +209,7 @@ export const getUserProgressStats = async (userId: string): Promise<UserProgress
   
   // Calculate streak (consecutive days completed)
   let streak = 0;
-  const currentDay = getCurrentDay();
+  const currentDay = await getCurrentDay();
   for (let day = currentDay; day >= 1; day--) {
     if (user.completed[`day${day}`]?.done) {
       streak++;
@@ -193,7 +229,7 @@ export const getUserProgressStats = async (userId: string): Promise<UserProgress
 
 // Get today's question
 export const getTodaysQuestion = async (): Promise<Question | null> => {
-  const currentDay = getCurrentDay();
+  const currentDay = await getCurrentDay();
   const questionRef = doc(db, 'questions', `day${currentDay}`);
   const questionSnap = await getDoc(questionRef);
   
@@ -290,7 +326,7 @@ export const getEnhancedDailyLeaderboard = async (day: number, limitCount: numbe
 
 // Get today's leaderboard
 export const getTodaysLeaderboard = async (limitCount: number = 10): Promise<LeaderboardEntry[]> => {
-  const currentDay = getCurrentDay();
+  const currentDay = await getCurrentDay();
   return getEnhancedDailyLeaderboard(currentDay, limitCount);
 };
 
@@ -356,7 +392,7 @@ export const getOverallLeaderboard = async (limitCount: number = 10): Promise<Ar
 };
 
 // Submit answer and check if correct (deprecated - use backend endpoint instead)
-export const submitAnswer = async (userId: string, day: number, answer: string): Promise<{ correct: boolean; message: string }> => {
+export const submitAnswer = async (_userId: string, day: number, answer: string): Promise<{ correct: boolean; message: string }> => {
   console.warn('submitAnswer function is deprecated. Use backend /play/submit endpoint instead.');
   
   const questionRef = doc(db, 'questions', `day${day}`);

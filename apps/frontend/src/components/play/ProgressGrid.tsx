@@ -12,7 +12,6 @@ interface Props {
   days: Day[];
   displayDay: number;
   onSelectDay: (day: number) => void;
-  maxAccessibleDay: number;
 }
 
 /**
@@ -20,14 +19,14 @@ interface Props {
  * Clicking an available day will call onSelectDay(day).
  * Memoized to prevent unnecessary re-renders.
  */
-const ProgressGrid = memo(function ProgressGrid({ days, displayDay, onSelectDay, maxAccessibleDay }: Props) {
+const ProgressGrid = memo(function ProgressGrid({ days, displayDay, onSelectDay }: Props) {
   return (
     <div className="flex flex-col flex-grow min-h-0 bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg p-6 shadow-md">
       <h3 className="text-lg font-semibold mb-4">Your Progress</h3>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 flex-grow min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-purple-600/40 scrollbar-track-transparent">
         { days ? days.map((d) => {
-          const isAvailable = d.isAccessible && d.day <= maxAccessibleDay && d.isDateUnlocked !== false;
+          const isAvailable = d.isAccessible && d.isDateUnlocked !== false;
           return (
             <div
               key={d.day}
