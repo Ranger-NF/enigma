@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import admin from "firebase-admin";
+import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 
 import authMiddleware from "../../middleware/authMiddleware";
 import { QuestionData } from "../types/questionTypes";
@@ -11,10 +12,88 @@ import {
   validateAnswer,
 } from "../utilities/questionRouteHelpers";
 
+type Timestamp = admin.firestore.Timestamp;
+
+export interface Question {
+  day: number;
+  text: string;
+  answer: string;
+  hint: string | null;
+  difficulty: number;
+  image?: string;
+
+  unlockDate: Timestamp;
+  updatedAt: Timestamp;
+}
+
 const router = Router();
 
 const WRONG_COOLDOWN_SECONDS = 30;
 export const MAX_ATTEMPTS_BEFORE_COOLDOWN = 10;
+
+router.get(
+  "/questions",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const { db } = req.app.locals;
+    try {
+      const questionsRef = db.collection("questions");
+      const snapshot = await questionsRef.orderBy("day", "asc").get();
+
+      const questions = snapshot.docs.map((doc: QueryDocumentSnapshot) => {
+        const data = doc.data() as Question;
+        // Remove answer field to prevent exposure
+        const { answer, ...safeData } = data;
+        return {
+          ...safeData,
+        };
+      }) as Omit<Question, "answer">[];
+
+      res.json({ questions });
+    } catch (error) {
+      console.error("Error fetching questions:", error);
+      res.status(500).json({ error: "Failed to fetch questions" });
+    }
+  },
+);
+
+router.get(
+  "/questions/day/:day",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    const { db } = req.app.locals;
+    const day = Number(req.params.day);
+
+    if (isNaN(day)) {
+      return res.status(400).json({ error: "Invalid day" });
+    }
+
+    try {
+      const snapshot = await db
+        .collection("questions")
+        .where("day", "==", day)
+        .limit(1)
+        .get();
+
+      if (snapshot.empty) {
+        return res.status(404).json({ error: "Question not found" });
+      }
+
+      const doc = snapshot.docs[0];
+      const data = doc.data() as Question;
+
+      // remove answer before sending
+      const { answer, ...safeData } = data;
+
+      res.json({
+        ...safeData,
+      });
+    } catch (error) {
+      console.error("Error fetching question by day:", error);
+      res.status(500).json({ error: "Failed to fetch question" });
+    }
+  },
+);
 
 router.get("/play", authMiddleware, async (req: Request, res: Response) => {
   const { db, getCurrentDay } = req.app.locals;

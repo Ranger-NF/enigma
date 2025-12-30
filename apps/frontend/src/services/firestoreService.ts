@@ -68,8 +68,8 @@ export interface UserProgress {
   completed: { [key: string]: CompletedDay };
 }
 
-export const getCurrentDay = async (): Promise<number> => {
-  const questions = await getAllQuestions(); // already sorted by day ASC
+export const getCurrentDay = async (user: any): Promise<number> => {
+  const questions = await getAllQuestions(user); // already sorted by day ASC
   const now = new Date();
 
   // Count how many questions have unlockDate <= now
@@ -99,8 +99,8 @@ export const isDayUnlocked = async (day: number): Promise<boolean> => {
 };
 
 // Get all unlocked days up to current day
-export const getUnlockedDays = async (): Promise<number[]> => {
-  const currentDay = await getCurrentDay();
+export const getUnlockedDays = async (user: any): Promise<number[]> => {
+  const currentDay = await getCurrentDay(user);
   const unlockedDays: number[] = [];
 
   for (let day = 1; day <= currentDay; day++) {
@@ -230,7 +230,7 @@ export const getUserProgressStats = async (
 
   // Calculate streak (consecutive days completed)
   let streak = 0;
-  const currentDay = await getCurrentDay();
+  const currentDay = await getCurrentDay(user);
   for (let day = currentDay; day >= 1; day--) {
     if (user.completed[`day${day}`]?.done) {
       streak++;
@@ -248,27 +248,47 @@ export const getUserProgressStats = async (
   };
 };
 
-// Get today's question
-export const getTodaysQuestion = async (): Promise<Question | null> => {
-  const currentDay = await getCurrentDay();
-  const questionRef = doc(db, "questions", `day${currentDay}`);
-  const questionSnap = await getDoc(questionRef);
+export const getTodaysQuestion = async (user: any): Promise<any | null> => {
+  if (!user) return null;
 
-  if (!questionSnap.exists()) return null;
+  const BACKEND =
+    import.meta.env.VITE_BACKEND_SERVER_URL || "http://localhost:5000";
 
-  return { id: questionSnap.id, ...questionSnap.data() } as Question;
+  const token = await user.getIdToken();
+  const res = await fetch(`${BACKEND}/play`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch today's question");
+  }
+
+  return await res.json();
 };
 
-// Get all questions (for admin purposes)
-export const getAllQuestions = async (): Promise<Question[]> => {
-  const questionsRef = collection(db, "questions");
-  const q = query(questionsRef, orderBy("day", "asc"));
-  const querySnapshot = await getDocs(q);
+export const getAllQuestions = async (
+  user: any,
+): Promise<Omit<Question, "answer">[]> => {
+  if (!user) throw new Error("Not authenticated");
 
-  return querySnapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as Question[];
+  const BACKEND =
+    import.meta.env.VITE_BACKEND_SERVER_URL || "http://localhost:5000";
+
+  const token = await user.getIdToken();
+  const res = await fetch(`${BACKEND}/questions`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch questions");
+  }
+
+  const data = await res.json();
+  return data.questions;
 };
 
 // Get daily leaderboard for a specific day with attempts tracking

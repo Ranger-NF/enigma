@@ -26,7 +26,7 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     const load = async () => {
-      const allQuestions = await getAllQuestions();
+      const allQuestions = await getAllQuestions(currentUser);
       setTotalDays(allQuestions.length);
 
       const day = await getCurrentDay();
