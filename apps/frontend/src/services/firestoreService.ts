@@ -18,6 +18,37 @@ import { getFirestore } from "firebase/firestore";
 
 const db = getFirestore(app);
 
+// Helper to parse unlockDate values that may come from Firestore Timestamps
+// or from the backend as ISO strings or plain objects { seconds }.
+const parseUnlockDate = (unlock: any): Date | null => {
+  if (!unlock) return null;
+
+  // Firestore Timestamp object with toDate()
+  if (typeof unlock.toDate === "function") {
+    try {
+      return unlock.toDate();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ISO string
+  if (typeof unlock === "string") {
+    const d = new Date(unlock);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Firestore serialized as { seconds: number } or { _seconds }
+  if (typeof unlock.seconds === "number") {
+    return new Date(unlock.seconds * 1000);
+  }
+  if (typeof unlock._seconds === "number") {
+    return new Date(unlock._seconds * 1000);
+  }
+
+  return null;
+};
+
 export interface User {
   id: string;
   name: string;
@@ -72,11 +103,13 @@ export const getCurrentDay = async (user: any): Promise<number> => {
   const questions = await getAllQuestions(user); // already sorted by day ASC
   const now = new Date();
 
-  // Count how many questions have unlockDate <= now
-  const unlockedCount = questions.filter((q) => {
-    const unlockDate = q.unlockDate?.toDate?.() ?? null;
-    return unlockDate && unlockDate <= now;
-  }).length;
+  // Count how many questions have unlockDate <= now. Support multiple
+  // serialization formats for unlockDate (Timestamp, ISO string, object).
+  let unlockedCount = 0;
+  for (const q of questions) {
+    const unlockDate = parseUnlockDate((q as any).unlockDate);
+    if (unlockDate && unlockDate <= now) unlockedCount++;
+  }
 
   // At least day 1 must be returned
   return Math.max(1, unlockedCount);
@@ -92,7 +125,8 @@ export const isDayUnlocked = async (day: number): Promise<boolean> => {
   const questionData = questionSnap.data() as Question;
   if (!questionData.unlockDate) return true; // If no unlock date, assume unlocked
 
-  const unlockDate = questionData.unlockDate.toDate();
+  const unlockDate = parseUnlockDate((questionData as any).unlockDate);
+  if (!unlockDate) return true; // If unparseable, be permissive and treat as unlocked
   const now = new Date();
 
   return now >= unlockDate;
@@ -372,7 +406,7 @@ export const getEnhancedDailyLeaderboard = async (
 export const getTodaysLeaderboard = async (
   limitCount: number = 10,
 ): Promise<LeaderboardEntry[]> => {
-  const currentDay = await getCurrentDay();
+  const currentDay = await getCurrentDay(undefined as any);
   return getEnhancedDailyLeaderboard(currentDay, limitCount);
 };
 
