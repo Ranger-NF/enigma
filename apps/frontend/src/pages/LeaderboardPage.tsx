@@ -26,17 +26,18 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     const load = async () => {
+      if (!currentUser) return; // wait for auth
       const allQuestions = await getAllQuestions(currentUser);
       setTotalDays(allQuestions.length);
 
-      const day = await getCurrentDay();
+      const day = await getCurrentDay(currentUser);
       setCurrentDay(day);
       setSelectedDay(day);
       fetchLeaderboard(day);
     };
 
     load();
-  }, []);
+  }, [currentUser]);
 
   const fetchLeaderboard = async (day: number) => {
     setLoading(true);
