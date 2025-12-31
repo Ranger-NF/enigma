@@ -135,7 +135,7 @@ export function usePlay(user: any) {
     async (day?: number) => {
       if (!user) return null;
 
-      const currentDay = await getCurrentDay();
+      const currentDay = await getCurrentDay(user);
       const targetDay = typeof day === "number" ? day : currentDay;
       const allowedDay = Math.min(targetDay, currentDay);
 
@@ -190,7 +190,7 @@ export function usePlay(user: any) {
           return null;
         }
         const data = (await res.json()) as QuestionResponse;
-        
+
         // Double-check if request was aborted before setting state
         if (controller.signal.aborted) {
           return null;
@@ -271,13 +271,17 @@ export function usePlay(user: any) {
           },
           body: JSON.stringify({ day: displayDay, answer }),
         });
-        
+
         if (!res.ok) {
           // If request failed, return error without updating state
           const errorData = await res.json().catch(() => ({}));
-          return { ok: false, data: errorData, message: errorData.result || "Submission failed" };
+          return {
+            ok: false,
+            data: errorData,
+            message: errorData.result || "Submission failed",
+          };
         }
-        
+
         const data = await res.json();
 
         // Update state only after successful request - prefer server-provided values
@@ -291,7 +295,10 @@ export function usePlay(user: any) {
           setAttemptsInPeriod((prev) => {
             const nextAttempts = prev + 1;
             // Only set client-side cooldown if server doesn't provide one and threshold is reached
-            if (nextAttempts >= COOLDOWN_THRESHOLD && typeof data.cooldownSeconds !== "number") {
+            if (
+              nextAttempts >= COOLDOWN_THRESHOLD &&
+              typeof data.cooldownSeconds !== "number"
+            ) {
               setCooldownSeconds(COOLDOWN_TIME);
               return 0;
             }
@@ -316,7 +323,7 @@ export function usePlay(user: any) {
 
           // Auto-navigate to next question if it exists and is unlocked
           if (updatedProgress) {
-            const currentDay = await getCurrentDay();
+            const currentDay = await getCurrentDay(user);
             const nextDay = displayDay + 1;
             const maxDay = Math.min(
               currentDay,
@@ -372,7 +379,7 @@ export function usePlay(user: any) {
       const p = await fetchProgress();
       if (p) {
         // find first incomplete accessible day (client-side)
-        const currentDay = await getCurrentDay();
+        const currentDay = await getCurrentDay(user);
         const accessibleMax = Math.min(currentDay, p.totalDays || currentDay);
         const firstIncomplete = p.progress.find(
           (d) => !d.isCompleted && d.isAccessible && d.day <= accessibleMax,
