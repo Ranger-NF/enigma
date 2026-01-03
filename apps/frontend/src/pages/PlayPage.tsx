@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import leftArrow from "@/assets/left-arrow.svg";
 import { calculateGridLayout, ImageSquare } from "@/components/play/ImageGrid";
 import TutorialModal from "@/components/play/tutorialModal";
+import { LoadingSpinner } from "@/components/ui/loadingSpinner";
 
 const DayBox = ({
   day,
@@ -31,7 +32,7 @@ const DayBox = ({
   // Determine state: completed > available > locked
   // A day is available if it's accessible AND date is unlocked
   // Use truthy check for isAccessible (true), and ensure isDateUnlocked is not explicitly false
-  const isAvailable = isAccessible === true && (isDateUnlocked !== false);
+  const isAvailable = isAccessible === true && isDateUnlocked !== false;
 
   let bgColor = "bg-gray-400"; // default for locked
   let textColor = "text-white";
@@ -75,7 +76,7 @@ const ImageSquareWithLoader = ({
   index,
   isLoaded,
   onLoad,
-  isSingleImage
+  isSingleImage,
 }: {
   image: string;
   index: number;
@@ -89,7 +90,11 @@ const ImageSquareWithLoader = ({
   React.useEffect(() => {
     // Use a small delay to ensure ref is attached
     const checkImage = () => {
-      if (imgRef.current && imgRef.current.complete && imgRef.current.naturalHeight !== 0) {
+      if (
+        imgRef.current &&
+        imgRef.current.complete &&
+        imgRef.current.naturalHeight !== 0
+      ) {
         // Image is already loaded (cached)
         onLoad(index);
       }
@@ -182,15 +187,15 @@ function PlayPage() {
 
   const dayBoxes = useMemo(
     () =>
-      generateDayBoxes(
-        progress?.totalDays ?? progress?.progress?.length ?? 5,
-      ),
+      generateDayBoxes(progress?.totalDays ?? progress?.progress?.length ?? 5),
     [progress?.totalDays, progress?.progress?.length],
   );
 
   const { day } = useParams<{ day?: string }>();
   const urlDay = day ? Number(day) : null;
   const loadingRef = useRef(false);
+
+  const expectedDay = urlDay && Number.isFinite(urlDay) ? urlDay : displayDay;
 
   // Control main page scrollbar depending on route (desktop only):
   // - /play           → main scrollbar visible
@@ -263,7 +268,7 @@ function PlayPage() {
   useEffect(() => {
     // Reset loaded state when image URLs actually change
     setSquareImagesLoaded(new Array(questionImages.length).fill(false));
-  }, [questionImages.join(',')]); // Track actual image URLs, not just length
+  }, [questionImages.join(",")]); // Track actual image URLs, not just length
 
   // Measure question height and update divider position
   useEffect(() => {
@@ -377,6 +382,11 @@ function PlayPage() {
     }
   };
 
+  const isQuestionReady =
+    question &&
+    typeof question.day === "number" &&
+    question.day === expectedDay;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -427,8 +437,7 @@ function PlayPage() {
             ref={questionRef}
             className="absolute font-whirlyBirdie font-bold text-white w-[733px] left-[calc(50%-733px/2-50px)] top-0 pt-[20px] text-[20px] leading-[30px] break-words"
           >
-            {question?.question ||
-              "I hold two people inside me forever, but i'm not a home. What am i ?"}
+            {isQuestionReady ? question.question : <LoadingSpinner />}
           </div>
           <div
             className="absolute w-[918.03px] h-0 left-0 border border-white"
@@ -651,12 +660,13 @@ function PlayPage() {
           </Button>
           {message && (
             <div
-              className={`font-poppins text-sm font-medium p-3 rounded ${message.includes("Correct") ||
+              className={`font-poppins text-sm font-medium p-3 rounded ${
+                message.includes("Correct") ||
                 message.includes("Success") ||
                 message.includes("🎉")
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-                }`}
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
             >
               {message}
             </div>
@@ -698,7 +708,11 @@ function PlayPage() {
                   <div
                     className={`font-poppins font-medium ${textColor} text-xs`}
                   >
-                    {isCompleted ? "Completed" : isAvailable ? "In Progress" : "Locked"}
+                    {isCompleted
+                      ? "Completed"
+                      : isAvailable
+                        ? "In Progress"
+                        : "Locked"}
                   </div>
                 </div>
               );
